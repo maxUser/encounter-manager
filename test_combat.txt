@@ -1,0 +1,20 @@
+Trog
+2
+1
+20
+q
+Battle of Trog Hill
+Hit Trog1 for 3 dmg
+Hit Pierre for 1 dmg
+Miss
+Miss
+Drink health potion
+Hit Dennis for 2 dmg
+n
+Hit Trog1 for 4 dmg
+Hit Pierre for 3 dmg
+Hit Trog2 for 2 dmg
+Miss
+Drink invisibility potion
+Hit Dennis for 22 dmg
+y
