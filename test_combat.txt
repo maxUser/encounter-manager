@@ -1,7 +1,6 @@
 Trog
 2
 1
-20
 q
 Battle of Trog Hill
 Hit Trog1 for 3 dmg
