@@ -7,6 +7,7 @@ class Character:
 		self.name = name
 		self.initiative = initiative
 		self.dex_bonus = dex_bonus
+		self.roll_off = 0
 		
 	def print_character(self):
 		print(self.name, self.initiative, self.dex_bonus)
@@ -90,7 +91,7 @@ def get_npc_init(dex_bonus):
  
 def print_combatants(combatants):
 	for char in combatants:
-		print(str(char.initiative) + ': ' + char.name)
+		print(str(char.initiative) + ': ' + char.name + '(' + str(char.dex_bonus) + ')')
 
 def print_combat(combat):
 	for k, v in combat.rounds.items():
@@ -139,42 +140,55 @@ def tiebreaker(combatants):
 			if combatantX.initiative == combatantY.initiative and combatantX.name != combatantY.name:
 				tie_exists = True
 	print('tie: ', tie_exists)
-	if tie_exists is True:
+	if tie_exists:
 		# Get the value of the tied initiative scores and the characters with those scores
 		tied_combatants = {} # {17: [('Pierre', 0), ('Ronan', 1)], 4: [('Dame Romaine', 2), ('Dennis', 3)]}
 		for combatantX in combatants:
 			for combatantY in combatants:
-				if combatantX.initiative == combatantY.initiative:
+				if combatantX.initiative == combatantY.initiative and combatantX != combatantY:
 					# Get all tied initiative scores, store them as keys
 					tied_combatants[combatantX.initiative] = []
 		for combatant in combatants:
 			if combatant.initiative in tied_combatants:
 				# Add combatants as values (combatant, index) to respective initiative key
 				tied_combatants[combatant.initiative].append([combatant, combatants.index(combatant)])
-		# for k, v in tied_combatants.items():
-		# 	print()
-		# 	print('binit: ', k)
-		# 	for tup in v:
-		# 		tup[0].print_character()
-		# 		print('bind: ', tup[1])
+		
 		for init in tied_combatants.keys():
-			# compare the dex bonus of each tied set of characters
-			# swap them in the combat order depending on their dex bonuses
-			# bubble sort because why not
-			n = len(tied_combatants[init])
-			for i in range(n-1, 0, -1):
-				for j in range(i):
-					if tied_combatants[init][j][0].dex_bonus < tied_combatants[init][j+1][0].dex_bonus:
-						temp = tied_combatants[init][j][1]
-						tied_combatants[init][j][1] = tied_combatants[init][j+1][1]
-						print('less than: ', tied_combatants[init][j][0].print_character())
-						print('greater than: ', tied_combatants[init][j+1][0].print_character())
-						tied_combatants[init][j+1][1] = temp
+			tied_set = tied_combatants[init]
+			tied_dex_bonuses = []
+			print('checking initiative count: ', init)
+			for combatantX in tied_set:
+				combatantX = combatantX[0]
+				for combatantY in tied_set:
+					combatantY = combatantY[0]
+					# cross reference each tied combatant's dex bonus
+					if combatantY != combatantX and combatantY.dex_bonus == combatantX.dex_bonus:
+						# tied dex bonuses, add to list
+						if combatantY not in tied_dex_bonuses:
+							tied_dex_bonuses.append(combatantY)
+						if combatantX not in tied_dex_bonuses:
+							tied_dex_bonuses.append(combatantX)
+						
+			if tied_dex_bonuses:
+				print('ROLL OFF!')
+				print('Dexterity bonus equality at ' + str(tied_dex_bonuses[0].dex_bonus) + ' for:')
+				for char in tied_dex_bonuses:
+					# ties in this situation must be sorted out IRL
+					char.roll_off = int(input(char.name + ' d20 roll: '))
+				# sort them based on .roll_off
+				tied_dex_bonuses.sort(key=lambda x: x.roll_off, reverse=True)
+				for char in tied_dex_bonuses:
+					print(char.name + ': ' + str(char.roll_off))
+				# sort them in the original combatants list
+				
+				combatants = [sorted(i, key = tied_dex_bonuses.index) for i in combatants]
 
-		# Put the characters back into the list according to their new indices
-		for init in tied_combatants.keys():
-			for i in range(len(tied_combatants[init])):
-				combatants[tied_combatants[init][i][1]] = tied_combatants[init][i][0]
+
+			# print(combatantX.name + ' and ' + combatantY.name + ' dex bonuses are equal at' + combatantX.dex_bonus + '. ROLL OFF!')
+			# combX_roll = input(combatantX.name + ' roll: ')
+			# combY_roll = input(combatantY.name + ' roll: ')
+			# sort and remove them from tied_set
+		
 		print()
 		print()
 			
