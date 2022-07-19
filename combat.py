@@ -91,7 +91,7 @@ def get_npc_init(dex_bonus):
  
 def print_combatants(combatants):
 	for char in combatants:
-		print(str(char.initiative) + ': ' + char.name + '(' + str(char.dex_bonus) + ')')
+		print(str(char.initiative) + ': ' + char.name + '(' + str(char.dex_bonus) + ') - ' + str(combatants.index(char)))
 
 def print_combat(combat):
 	for k, v in combat.rounds.items():
@@ -158,34 +158,40 @@ def tiebreaker(combatants):
 			print('TIEBREAKER at {}'.format(combatants[tie_start_ind].initiative))
 			combatants[tie_start_ind:tie_end_ind+1] = sorted(combatants[tie_start_ind:tie_end_ind+1], key=lambda x:x.dex_bonus, reverse=True)
 			# search through the tied initiative set looking for tied dex bonuses
-			init_set = combatants[tie_start_ind:tie_end_ind+1]
 			dex_bonus_tie_start_ind = 0
 			dex_bonus_tie_end_ind = 0
-			for j in range(init_set):
-				print(j)
+			print_combatants(combatants)
+			for j in range(tie_start_ind, tie_end_ind+1):
+				print('j: {}, tie_start:end {}:{}'.format(j, tie_start_ind, tie_end_ind))
 				dex_bonus_end_found = False
-				if init_set[j].dex_bonus == init_set[j+1].dex_bonus and j == 0:
+				if combatants[j].dex_bonus == combatants[j+1].dex_bonus and j == tie_start_ind:
 					# if it's the first element
 					dex_bonus_tie_start_ind = j
-				elif init_set[j].dex_bonus == init_set[j+1].dex_bonus and init_set[j].dex_bonus != init_set[j-1].dex_bonus:
+				elif combatants[j].dex_bonus == combatants[j+1].dex_bonus and combatants[j].dex_bonus != combatants[j-1].dex_bonus:
 					dex_bonus_tie_start_ind = j
-				if init_set[j].dex_bonus != init_set[j+1].dex_bonus and init_set[j].dex_bonus == init_set[j-1].dex_bonus:
+				# else:
+				# 	print(combatants[j].name, 'A')
+				if combatants[j].dex_bonus != combatants[j+1].dex_bonus and combatants[j].dex_bonus == combatants[j-1].dex_bonus and combatants[j].initiative == combatants[j-1].initiative:
 					dex_bonus_tie_end_ind = j
 					dex_bonus_end_found = True
-				elif init_set[j].dex_bonus == init_set[j-1].dex_bonus and j == len(init_set)-1:
+				elif combatants[j].dex_bonus == combatants[j-1].dex_bonus and j == tie_end_ind:
 					# if it's the last element
+					# print('Last ele/j: {}/{}'.format(combatants[j], j))
 					dex_bonus_tie_end_ind = j
 					dex_bonus_end_found = True
+				# else:
+				# 	print(combatants[j].name, 'B')
 				if dex_bonus_end_found:
-					# print('ROLL OFF at {}'.format(init_set[dex_bonus_tie_start_ind].dex_bonus))
-					for m in init_set[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1]:
+					print('DEX BONUS tie_start:end {}:{}'.format(dex_bonus_tie_start_ind, dex_bonus_tie_end_ind))
+					print('ROLL OFF at {}'.format(combatants[dex_bonus_tie_start_ind].dex_bonus))
+					for m in combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1]:
 						if not m.pc:
 							m.roll_off = int(randint(1,20))
 							print('{} rolled {}'.format(m.name, m.roll_off))
 						else:
 							m.roll_off = int(input('{} roll: '.format(m.name)))
-					combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1] = sorted(init_set[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1], key=lambda x:x.roll_off, reverse=True)
-	print_combatants(combatants)
+					combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1] = sorted(combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1], key=lambda x:x.roll_off, reverse=True)
+					#print_combatants(combatants)
 	sys.exit()
 		
 	
