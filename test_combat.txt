@@ -1,6 +1,9 @@
 Trog
 2
 1
+Goblin
+3
+2
 q
 Battle of Trog Hill
 Hit Trog1 for 3 dmg
@@ -9,10 +12,16 @@ Miss
 Miss
 Drink health potion
 Hit Dennis for 2 dmg
+Hit Dennis for 1 dmg
+miss
+Hit Ronan for 2 dmg
 n
 Hit Trog1 for 4 dmg
 Hit Pierre for 3 dmg
 Hit Trog2 for 2 dmg
+Miss
+Miss
+Miss
 Miss
 Drink invisibility potion
 Hit Dennis for 22 dmg

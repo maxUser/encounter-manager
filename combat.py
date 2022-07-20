@@ -2,14 +2,18 @@ import csv
 import sys
 from random import randint
 
+
+'''
+	TODO: input error checking
+'''
+
 class Character:
-	def __init__(self, name, initiative, pc, dex_bonus=0):
+	def __init__(self, name, initiative, dex_bonus=0, pc=True):
 		self.name = name
 		self.initiative = initiative
 		self.dex_bonus = dex_bonus
 		self.pc = pc
 		self.roll_off = 0
-		
 		
 	def print_character(self):
 		print(self.name, self.initiative, self.dex_bonus)
@@ -29,21 +33,20 @@ class Combat:
 			print(k, v)
 	def __str__(self):
 		return self.name
-
 		
 def player_characters():
-	# dame_init = input('Dame Romaine initiative: ')
-	# dennis_init = input('Dennis Le Menace initiative: ')
-	# ronan_init = input('Ronan initiative: ')
-	# pierre_init = input('Pierre initiative: ')
-	
-	#return [Character('Dame Romaine', dame_init), Character('Dennis Le Menace', dennis_init), Character('Ronan', ronan_init), Character('Pierre', pierre_init)]
-	return [Character('Dame Romaine', 7, True, -2), Character('Dennis Le Menace', 7, True, 2), Character('Ronan', 21, True, 1), Character('Pierre', 21, True, 1)]
+	pc_list = ['Dennis Le Menace', 'Pierre', 'Ronan', 'Dame Romaine']
+	pcs = []
+	for pc in pc_list:
+		pc_init = int(input('{} initiative: '.format(pc)))
+		pc_dex_bonus = get_dex_bonus(pc)
+		pcs.append(Character(pc, pc_init, pc_dex_bonus))
+	return pcs
 	
 #f = open('test_combat.txt', 'r')
   
 def nonplayer_characters():
-	f = open('test_tiebreak.txt', 'r') 
+	#f = open('test_tiebreak.txt', 'r') 
 	npc_name = ''
 	npc_list = []
 	while True:
@@ -68,30 +71,31 @@ def nonplayer_characters():
 			for i in range(num_npc):
 				# add consecutive numbers after each npc name
 				npc_multi = npc_name + str(i+1)
-				npc_list.append(Character(npc_multi, get_npc_init(dex_bonus), False, dex_bonus))
+				npc_list.append(Character(npc_multi, get_npc_init(dex_bonus), dex_bonus, False))
 		else:
-			npc_list.append(Character(npc_name, get_npc_init(dex_bonus), False, dex_bonus))   
+			npc_list.append(Character(npc_name, get_npc_init(dex_bonus), dex_bonus, False))
 	
 	return npc_list
 
-def get_dex_bonus(npc_name):
+def get_dex_bonus(char_name):
 	monster_file = open('monsters.csv', 'r')
 	monsters = csv.reader(monster_file)
-	
-	monster_in_file = False
-	dex_bonus = 0
 	for monster_row in monsters:
-		if monster_row[0] == npc_name.lower():
-			monster_in_file = True
+		if monster_row[0] == char_name.lower():
 			return int(monster_row[1])
-	return int(input(npc_name + ' dex bonus: '))        
+	monster_file.close()
+	return int(input(char_name + ' dex bonus: '))        
 	
 def get_npc_init(dex_bonus):
 	return int(randint(1,20) + dex_bonus)
  
 def print_combatants(combatants):
+	print('\nINITIATIVE ORDER:')
 	for char in combatants:
-		print(str(char.initiative) + ': ' + char.name + '(' + str(char.dex_bonus) + ') - ' + str(combatants.index(char)))
+		if char.roll_off == 0:
+			print('{}: {} ({})'.format(char.initiative, char.name, char.dex_bonus))
+		else:
+			print('{}: {} ({}) - ROLL OFF={}'.format(char.initiative, char.name, char.dex_bonus, char.roll_off))
 
 def print_combat(combat):
 	for k, v in combat.rounds.items():
@@ -102,7 +106,6 @@ def round_order(combatants):
 		combat_name = f.readline().strip()
 	except:
 		combat_name = input('Name of combat: ')
-	print('combat name: ', combat_name)
 	combat = Combat(combat_name)
 	round = 1
 	round_dict = {}
@@ -121,9 +124,9 @@ def round_order(combatants):
 		print('ROUND ' + str(round) + ' END')
 		try:
 			over = f.readline().strip()
-			print('over: ', over)
+			print('Combat over [y/n]: ', over)
 		except:
-			over = input('Combat over [y/n]')
+			over = input('Combat over [y/n]: ')
 		if over == 'y':
 			combat.add_round(round_dict)
 			break
@@ -134,10 +137,10 @@ def round_order(combatants):
 def tiebreaker(combatants):
 	'''Args: Combatants is a list of all combatants as Character objects sorted by Character.initiative
 	   TODO: reduce duplicate code
+	   TODO: ability to manually rearrange initiative order
 	'''
 	tie_start_ind = 0
 	tie_end_ind = 0
-	print_combatants(combatants)
 	for i in range(len(combatants)-1):
 		# get start and end indices of tied combatants in list
 		# sort each tie set by dex bonus
@@ -156,13 +159,14 @@ def tiebreaker(combatants):
 			end_found = True
 		if end_found:
 			print('TIEBREAKER at {}'.format(combatants[tie_start_ind].initiative))
-			combatants[tie_start_ind:tie_end_ind+1] = sorted(combatants[tie_start_ind:tie_end_ind+1], key=lambda x:x.dex_bonus, reverse=True)
+			combatants[tie_start_ind:tie_end_ind+1] = sorted(combatants[tie_start_ind:tie_end_ind+1], key=lambda x:x.dex_bonus, reverse=True) 
+			print('Between: ' + ', '.join([x.name for x in combatants[tie_start_ind:tie_end_ind+1]]))
 			# search through the tied initiative set looking for tied dex bonuses
 			dex_bonus_tie_start_ind = 0
 			dex_bonus_tie_end_ind = 0
 			print_combatants(combatants)
 			for j in range(tie_start_ind, tie_end_ind+1):
-				print('j: {}, tie_start:end {}:{}'.format(j, tie_start_ind, tie_end_ind))
+				# print('j: {}, tie_start:end {}:{}'.format(j, tie_start_ind, tie_end_ind))
 				dex_bonus_end_found = False
 				if combatants[j].dex_bonus == combatants[j+1].dex_bonus and j == tie_start_ind:
 					# if it's the first element
@@ -182,7 +186,7 @@ def tiebreaker(combatants):
 				# else:
 				# 	print(combatants[j].name, 'B')
 				if dex_bonus_end_found:
-					print('DEX BONUS tie_start:end {}:{}'.format(dex_bonus_tie_start_ind, dex_bonus_tie_end_ind))
+					#print('DEX BONUS tie_start:end {}:{}'.format(dex_bonus_tie_start_ind, dex_bonus_tie_end_ind))
 					print('ROLL OFF at {}'.format(combatants[dex_bonus_tie_start_ind].dex_bonus))
 					for m in combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1]:
 						if not m.pc:
@@ -192,18 +196,16 @@ def tiebreaker(combatants):
 							m.roll_off = int(input('{} roll: '.format(m.name)))
 					combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1] = sorted(combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1], key=lambda x:x.roll_off, reverse=True)
 					#print_combatants(combatants)
-	sys.exit()
-		
+	return combatants	
 	
 def main():
 	combatants = []
 	combatants.extend(player_characters())
 	combatants.extend(nonplayer_characters())
 	combatants.sort(key=lambda x:x.initiative, reverse=True)
-	# 
 	combatants = tiebreaker(combatants)
-	
-	#round_order(combatants)
+	print_combatants(combatants)
+	round_order(combatants)
 	try:
 		f.close()
 	except:
