@@ -1,10 +1,13 @@
 import csv
-import sys
+import json
+
+from datetime import datetime
 from random import randint
 
 
 '''
 	TODO: input error checking
+	TODO: at end of combat, print combat dict to file (human readable?)
 '''
 
 class Character:
@@ -38,12 +41,13 @@ def player_characters():
 	pc_list = ['Dennis Le Menace', 'Pierre', 'Ronan', 'Dame Romaine']
 	pcs = []
 	for pc in pc_list:
-		pc_init = int(input('{} initiative: '.format(pc)))
+		# pc_init = int(input('{} initiative: '.format(pc)))
+		pc_init = int(randint(1,20))
 		pc_dex_bonus = get_dex_bonus(pc)
 		pcs.append(Character(pc, pc_init, pc_dex_bonus))
 	return pcs
 	
-#f = open('test_combat.txt', 'r')
+f = open('test_combat.txt', 'r')
   
 def nonplayer_characters():
 	#f = open('test_tiebreak.txt', 'r') 
@@ -111,9 +115,11 @@ def round_order(combatants):
 	round_dict = {}
 	while True:
 		round_dict[round] = {} # {1:{'Ronan': 'hit goblin for 2 dmg', 'Pierre'...}, 2:{}}
-		print ('\-/-\-/-\-/-\-/-\-/-\\')
-		print('ROUND ' + str(round))
-		print ('/-\-/-\-/-\-/-\-/-\-/')
+		print('========================')
+		print('========================')
+		print('====== ROUND {} ========'.format(str(round)))
+		print('========================')
+		print('========================')
 		for i in range(len(combatants)):
 			print(combatants[i].name + '\'s turn')
 			try:
@@ -132,7 +138,8 @@ def round_order(combatants):
 			break
 		combat.add_round(round_dict)
 		round += 1
-	combat.print_combat()
+	# combat.print_combat()
+	return combat
 
 def tiebreaker(combatants):
 	'''Args: Combatants is a list of all combatants as Character objects sorted by Character.initiative
@@ -191,13 +198,21 @@ def tiebreaker(combatants):
 					for m in combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1]:
 						if not m.pc:
 							m.roll_off = int(randint(1,20))
-							print('{} rolled {}'.format(m.name, m.roll_off))
+							print('{} roll: {}'.format(m.name, m.roll_off))
 						else:
 							m.roll_off = int(input('{} roll: '.format(m.name)))
 					combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1] = sorted(combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1], key=lambda x:x.roll_off, reverse=True)
 					#print_combatants(combatants)
 	return combatants	
 	
+def write_combat_to_file(combat):
+	filename = datetime.now().strftime('%Y%m%d_%H%M%S_{}.json'.format(combat.name.replace(' ','_')))
+	directory = 'combats'
+	path = directory + '/' + filename
+	with open(path, 'w') as outfile:
+		json.dump(combat.rounds, outfile)
+
+
 def main():
 	combatants = []
 	combatants.extend(player_characters())
@@ -205,7 +220,8 @@ def main():
 	combatants.sort(key=lambda x:x.initiative, reverse=True)
 	combatants = tiebreaker(combatants)
 	print_combatants(combatants)
-	round_order(combatants)
+	combat = round_order(combatants)
+	write_combat_to_file(combat)
 	try:
 		f.close()
 	except:
