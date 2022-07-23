@@ -7,7 +7,8 @@ from random import randint
 
 '''
 	TODO: input error checking
-	TODO: at end of combat, print combat dict to file (human readable?)
+	TODO: save combat in progress and resume where it left off
+	TODO: ask to add new monsters to monsters.csv
 '''
 
 class Character:
@@ -37,39 +38,42 @@ class Combat:
 	def __str__(self):
 		return self.name
 		
+def test_combat():
+	f = open('test_combat.txt', 'r')
+	npc_name = f.readline().strip()
+	dex_bonus = f.readline().strip()
+	num_npc = int(f.readline().strip())
+
 def player_characters():
 	pc_list = ['Dennis Le Menace', 'Pierre', 'Ronan', 'Dame Romaine']
 	pcs = []
 	for pc in pc_list:
-		# pc_init = int(input('{} initiative: '.format(pc)))
-		pc_init = int(randint(1,20))
+		# pc_init = int(randint(1,20))
+		pc_init = get_quantity_input('{} initiative: '.format(pc))
+		print(pc, pc_init)
 		pc_dex_bonus = get_dex_bonus(pc)
 		pcs.append(Character(pc, pc_init, pc_dex_bonus))
 	return pcs
-	
-f = open('test_combat.txt', 'r')
-  
+
+def get_quantity_input(something):
+	while True:
+		try:
+			return int(input(something))
+		except ValueError:
+			print('Invalid input, please enter a number.')
+
 def nonplayer_characters():
 	#f = open('test_tiebreak.txt', 'r') 
 	npc_name = ''
 	npc_list = []
 	while True:
-		try:
-			npc_name = f.readline().strip()
-		except:
-			npc_name = input('Monster name: ')
+		npc_name = input('Monster name: ')
 		if len(npc_name) < 2:
+			print()
 			break
-		try:
-			num_npc = int(f.readline().strip())
-		except:
-			num_npc = int(input('Number of ' + npc_name + 's: '))
-		  
-		try:
-			dex_bonus = int(f.readline().strip())
-		except:
-			# get dex_bonus
-			dex_bonus = get_dex_bonus(npc_name)
+
+		num_npc = get_quantity_input('Number of ' + npc_name + 's: ')
+		dex_bonus = get_dex_bonus(npc_name)
 		
 		if num_npc > 1:
 			for i in range(num_npc):
@@ -78,28 +82,30 @@ def nonplayer_characters():
 				npc_list.append(Character(npc_multi, get_npc_init(dex_bonus), dex_bonus, False))
 		else:
 			npc_list.append(Character(npc_name, get_npc_init(dex_bonus), dex_bonus, False))
-	
 	return npc_list
 
 def get_dex_bonus(char_name):
+	dex_bonus = 0
 	monster_file = open('monsters.csv', 'r')
 	monsters = csv.reader(monster_file)
 	for monster_row in monsters:
 		if monster_row[0] == char_name.lower():
 			return int(monster_row[1])
 	monster_file.close()
-	return int(input(char_name + ' dex bonus: '))        
+	dex_bonus = get_quantity_input(char_name + ' dex bonus: ')
+	return dex_bonus
 	
 def get_npc_init(dex_bonus):
 	return int(randint(1,20) + dex_bonus)
  
-def print_combatants(combatants):
-	print('\nINITIATIVE ORDER:')
+def print_initiative_order(combatants):
+	print('INITIATIVE ORDER:')
 	for char in combatants:
 		if char.roll_off == 0:
 			print('{}: {} ({})'.format(char.initiative, char.name, char.dex_bonus))
 		else:
 			print('{}: {} ({}) - ROLL OFF={}'.format(char.initiative, char.name, char.dex_bonus, char.roll_off))
+	print()
 
 def print_combat(combat):
 	for k, v in combat.rounds.items():
@@ -171,7 +177,7 @@ def tiebreaker(combatants):
 			# search through the tied initiative set looking for tied dex bonuses
 			dex_bonus_tie_start_ind = 0
 			dex_bonus_tie_end_ind = 0
-			print_combatants(combatants)
+			print_initiative_order(combatants)
 			for j in range(tie_start_ind, tie_end_ind+1):
 				# print('j: {}, tie_start:end {}:{}'.format(j, tie_start_ind, tie_end_ind))
 				dex_bonus_end_found = False
@@ -202,16 +208,16 @@ def tiebreaker(combatants):
 						else:
 							m.roll_off = int(input('{} roll: '.format(m.name)))
 					combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1] = sorted(combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1], key=lambda x:x.roll_off, reverse=True)
-					#print_combatants(combatants)
+					print_initiative_order(combatants)
 	return combatants	
 	
 def write_combat_to_file(combat):
+	print('printing {} to file'.format(combat.name))
 	filename = datetime.now().strftime('%Y%m%d_%H%M%S_{}.json'.format(combat.name.replace(' ','_')))
 	directory = 'combats'
 	path = directory + '/' + filename
 	with open(path, 'w') as outfile:
 		json.dump(combat.rounds, outfile)
-
 
 def main():
 	combatants = []
@@ -219,9 +225,9 @@ def main():
 	combatants.extend(nonplayer_characters())
 	combatants.sort(key=lambda x:x.initiative, reverse=True)
 	combatants = tiebreaker(combatants)
-	print_combatants(combatants)
+	# print_initiative_order(combatants)
 	combat = round_order(combatants)
-	write_combat_to_file(combat)
+	# write_combat_to_file(combat)
 	try:
 		f.close()
 	except:
