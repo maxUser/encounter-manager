@@ -1,10 +1,10 @@
 Trog
-2
+5
 3
 Blog
-1
+5
 4
 Skog
-1
+5
 2
 a
