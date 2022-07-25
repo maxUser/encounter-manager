@@ -1,14 +1,18 @@
+import re
+import os
 import csv
 import json
-
-from datetime import datetime
+import calendar
 from random import randint
+from datetime import datetime
+
 
 
 '''
 	TODO: input error checking
 	TODO: save combat in progress and resume where it left off
 	TODO: ask to add new monsters to monsters.csv
+	TODO: ability to manually rearrange initiative order
 '''
 
 class Character:
@@ -58,16 +62,16 @@ def player_characters():
 	pcs = []
 	for pc in pc_list:
 		# pc_init = int(randint(1,20))
-		pc_init = 0
-		if pc == 'Dennis Le Menace':
-			pc_init = 5
-		elif pc == 'Pierre':
-			pc_init = 21
-		elif pc == 'Ronan':
-			pc_init = 21
-		elif pc == 'Dame Romaine':
-			pc_init = 14
-		# pc_init = get_quantity_input('{} initiative: '.format(pc))
+		# pc_init = 0
+		# if pc == 'Dennis Le Menace':
+		# 	pc_init = 5
+		# elif pc == 'Pierre':
+		# 	pc_init = 21
+		# elif pc == 'Ronan':
+		# 	pc_init = 21
+		# elif pc == 'Dame Romaine':
+		# 	pc_init = 14
+		pc_init = get_quantity_input('{} initiative roll: '.format(pc))
 		pc_dex_bonus = get_dex_bonus(pc)
 		pcs.append(Character(pc, pc_init, pc_dex_bonus))
 	return pcs
@@ -176,7 +180,6 @@ def round_order(combatants):
 def tiebreaker(combatants):
 	'''Args: Combatants is a list of all combatants as Character objects sorted by Character.initiative
 	   TODO: reduce duplicate code
-	   TODO: ability to manually rearrange initiative order
 	'''
 	tie_start_ind = 0
 	tie_end_ind = 0
@@ -240,16 +243,62 @@ def write_combat_to_file(combat):
 	with open(path, 'w') as outfile:
 		json.dump(combat.rounds, outfile)
 
+def resume_combat():
+	'''
+	Prompt if new or resuming old combat
+	Enter name of combat
+	Automatically finds latest version of the combat file
+	'''
+	# input_combat_name = input('Name of combat: ').lower()
+	# Get files from directory
+	file_info = []
+	directory = os.fsdecode('combats')
+	for file in os.listdir(directory):
+		filename = os.fsdecode(file)
+		datetime_re = re.compile('[0-9]+')
+		date_and_time = datetime_re.findall(filename) # returns ['20220721', '204351']
+		combat_name_re = re.compile('_[a-zA-Z]+', re.IGNORECASE)
+		list_of_words = combat_name_re.findall(filename)
+		list_of_words = [x.strip('_').lower() for x in list_of_words]
+		file_combat_name = ' '.join(y for y in list_of_words)
+		date_and_time.append(file_combat_name)
+		file_info.append(date_and_time)
+	file_info = sorted(file_info, key=lambda file_info:[file_info[0],file_info[1]], reverse=True)
+
+	# Give options to select from 3 most recent battles
+	print('Select from the 3 most recent battles:')
+	combat_selection_dict = {1: '', 2: '', 3: ''}
+	i = 1
+	for combat_file in file_info[0:3]:
+		combat_name = combat_file[2].title()
+		combat_date = combat_file[0][0:4] + '/' + calendar.month_abbr[int(combat_file[0][4:6])] + '/' + combat_file[0][6:8]
+		combat_time = combat_file[1][0:2] + ':' + combat_file[1][2:4] + ':' + combat_file[1][4:6]
+		combat_select = combat_name + ' ' + combat_date + ' ' + combat_time
+		combat_selection_dict[i] = combat_select
+		i+=1
+	for k, v in combat_selection_dict.items():
+		print(str(k) + ') ', v)
+	selection_input = int(input('\nSelect a battle by list number: '))
+	print('You have selected: ' + combat_selection_dict[selection_input])
+
+
+		
+
+
+
+
+
 def main():
-	test_tiebreak()
-	# combatants = []
-	# combatants.extend(player_characters())
-	# combatants.extend(nonplayer_characters())
-	# combatants.sort(key=lambda x:x.initiative, reverse=True)
-	# combatants = tiebreaker(combatants)
-	# combat = round_order(combatants)
-	# write_combat_to_file(combat)
+	combatants = []
+	combatants.extend(player_characters())
+	combatants.extend(nonplayer_characters())
+	combatants.sort(key=lambda x:x.initiative, reverse=True)
+	combatants = tiebreaker(combatants)
+	combat = round_order(combatants)
+	write_combat_to_file(combat)
 	
 if __name__ == '__main__':
-	main()
+	# main()
+	# test_tiebreak()
+	resume_combat()
 	
