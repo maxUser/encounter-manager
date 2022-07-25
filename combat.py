@@ -243,13 +243,7 @@ def write_combat_to_file(combat):
 	with open(path, 'w') as outfile:
 		json.dump(combat.rounds, outfile)
 
-def resume_combat():
-	'''
-	Prompt if new or resuming old combat
-	Enter name of combat
-	Automatically finds latest version of the combat file
-	'''
-	# input_combat_name = input('Name of combat: ').lower()
+def get_files_from_directory(return_file=False, date_time=()):
 	# Get files from directory
 	file_info = []
 	directory = os.fsdecode('combats')
@@ -257,35 +251,46 @@ def resume_combat():
 		filename = os.fsdecode(file)
 		datetime_re = re.compile('[0-9]+')
 		date_and_time = datetime_re.findall(filename) # returns ['20220721', '204351']
+		if return_file and date_time:
+			if date_time[0] == date_and_time[0] and date_time[1] == date_and_time[1]:
+				return file
 		combat_name_re = re.compile('_[a-zA-Z]+', re.IGNORECASE)
 		list_of_words = combat_name_re.findall(filename)
 		list_of_words = [x.strip('_').lower() for x in list_of_words]
 		file_combat_name = ' '.join(y for y in list_of_words)
 		date_and_time.append(file_combat_name)
 		file_info.append(date_and_time)
-	file_info = sorted(file_info, key=lambda file_info:[file_info[0],file_info[1]], reverse=True)
 
+	return sorted(file_info, key=lambda file_info:[file_info[0],file_info[1]], reverse=True)
+
+def resume_combat():
+	'''
+	Prompt if new or resuming old combat
+	'''
+	# input_combat_name = input('Name of combat: ').lower()
+	
+	file_info = get_files_from_directory() # [['20220725', '081517', 'battle of later that afternoon'],..]
 	# Give options to select from 3 most recent battles
 	print('Select from the 3 most recent battles:')
 	combat_selection_dict = {1: '', 2: '', 3: ''}
+	file_selection_dict = {1: '', 2: '', 3: ''}
 	i = 1
 	for combat_file in file_info[0:3]:
 		combat_name = combat_file[2].title()
 		combat_date = combat_file[0][0:4] + '/' + calendar.month_abbr[int(combat_file[0][4:6])] + '/' + combat_file[0][6:8]
 		combat_time = combat_file[1][0:2] + ':' + combat_file[1][2:4] + ':' + combat_file[1][4:6]
-		combat_select = combat_name + ' ' + combat_date + ' ' + combat_time
+		combat_select = combat_name + ' [' + combat_date + ' ' + combat_time + ']'
 		combat_selection_dict[i] = combat_select
+		file_selection_dict[i] = (combat_file[0], combat_file[1])
 		i+=1
 	for k, v in combat_selection_dict.items():
 		print(str(k) + ') ', v)
 	selection_input = int(input('\nSelect a battle by list number: '))
 	print('You have selected: ' + combat_selection_dict[selection_input])
-
+	combat_file = get_files_from_directory(True, file_selection_dict[selection_input])
+	print(json.load(open('combats/' + combat_file)))
 
 		
-
-
-
 
 
 def main():
