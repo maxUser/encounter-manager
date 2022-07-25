@@ -2,10 +2,10 @@ import re
 import os
 import csv
 import json
+import pickle
 import calendar
 from random import randint
 from datetime import datetime
-
 
 
 '''
@@ -33,6 +33,7 @@ class Combat:
 	def __init__(self, name):
 		self.name = name
 		self.rounds = {}
+		self.combatants = {}
 	def add_round(self, round):
 		self.rounds.update(round)
 	def print_combat(self):
@@ -44,9 +45,14 @@ class Combat:
 		
 def test_combat():
 	f = open('test_combat.txt', 'r')
-	npc_name = f.readline().strip()
-	dex_bonus = f.readline().strip()
-	num_npc = int(f.readline().strip())
+	combatants = []
+	combatants.extend(player_characters())
+	combatants.extend(nonplayer_characters(f))
+	combatants.sort(key=lambda x:x.initiative, reverse=True)
+	combatants = tiebreaker(combatants)
+	combat = round_order(combatants, f)
+	write_combat_to_file(combat)
+	f.close()
 
 def test_tiebreak():
 	f = open('test_tiebreak.txt', 'r')
@@ -61,7 +67,7 @@ def player_characters():
 	pc_list = ['Dennis Le Menace', 'Pierre', 'Ronan', 'Dame Romaine']
 	pcs = []
 	for pc in pc_list:
-		# pc_init = int(randint(1,20))
+		pc_init = int(randint(1,20))
 		# pc_init = 0
 		# if pc == 'Dennis Le Menace':
 		# 	pc_init = 5
@@ -71,7 +77,7 @@ def player_characters():
 		# 	pc_init = 21
 		# elif pc == 'Dame Romaine':
 		# 	pc_init = 14
-		pc_init = get_quantity_input('{} initiative roll: '.format(pc))
+		# pc_init = get_quantity_input('{} initiative roll: '.format(pc))
 		pc_dex_bonus = get_dex_bonus(pc)
 		pcs.append(Character(pc, pc_init, pc_dex_bonus))
 	return pcs
@@ -140,41 +146,51 @@ def print_combat(combat):
 	for k, v in combat.rounds.items():
 		print(k, v)
 		
-def round_order(combatants):
-	print_initiative_order(combatants)
-	try:
+def create_combat(combatants, f):
+	# get combat name
+	if f:
 		combat_name = f.readline().strip()
-	except:
+		print('Combat name: ', combat_name)
+	else:
 		combat_name = input('Name of combat: ')
+	# create combat object
 	combat = Combat(combat_name)
+	# add combatants to combat object
+	for combatant in combatants:
+		combat.combatants[combatant.name] = combatant
+	return combat
+
+def round_order(combatants, f=False):
+	print_initiative_order(combatants)
+	combat = create_combat(combatants, f)
 	round = 1
 	round_dict = {}
+	# Loop through rounds of combat
 	while True:
 		round_dict[round] = {} # {1:{'Ronan': 'hit goblin for 2 dmg', 'Pierre'...}, 2:{}}
 		print('========================')
 		print('========================')
-		print('====== ROUND {} ========'.format(str(round)))
+		print('======= ROUND {} ========'.format(str(round)))
 		print('========================')
 		print('========================')
 		for i in range(len(combatants)):
 			print(combatants[i].name + '\'s turn')
-			try:
+			if f:
 				round_dict[round][combatants[i].name] = f.readline().strip()
 				print('action: ', round_dict[round][combatants[i].name])
-			except:
+			else:
 				round_dict[round][combatants[i].name] = input(': ')
 		print('ROUND ' + str(round) + ' END')
-		try:
+		if f:
 			over = f.readline().strip()
 			print('Combat over [y/n]: ', over)
-		except:
+		else:
 			over = input('Combat over [y/n]: ')
 		if over == 'y':
 			combat.add_round(round_dict)
 			break
 		combat.add_round(round_dict)
 		round += 1
-	# combat.print_combat()
 	return combat
 
 def tiebreaker(combatants):
@@ -237,18 +253,25 @@ def tiebreaker(combatants):
 	
 def write_combat_to_file(combat):
 	print('printing {} to file'.format(combat.name))
-	filename = datetime.now().strftime('%Y%m%d_%H%M%S_{}.json'.format(combat.name.replace(' ','_')))
+	print(combat.rounds)
+	print(combat.combatants)
+	filename = datetime.now().strftime('%Y%m%d_%H%M%S_{}.pickle'.format(combat.name.replace(' ','_')))
 	directory = 'combats'
 	path = directory + '/' + filename
-	with open(path, 'w') as outfile:
-		json.dump(combat.rounds, outfile)
+	try:
+		with open(path, 'wb') as outfile:
+			pickle.dump(combat, outfile)
+	except Exception as e:
+		print(e)
 
-def get_files_from_directory(return_file=False, date_time=()):
+def get_combat_file(return_file=False, date_time=()):
 	# Get files from directory
 	file_info = []
 	directory = os.fsdecode('combats')
 	for file in os.listdir(directory):
 		filename = os.fsdecode(file)
+		if filename[-1] == 'e':
+			print(pickle.load(filename))
 		datetime_re = re.compile('[0-9]+')
 		date_and_time = datetime_re.findall(filename) # returns ['20220721', '204351']
 		if return_file and date_time:
@@ -263,13 +286,13 @@ def get_files_from_directory(return_file=False, date_time=()):
 
 	return sorted(file_info, key=lambda file_info:[file_info[0],file_info[1]], reverse=True)
 
-def resume_combat():
+def get_combat_details():
 	'''
 	Prompt if new or resuming old combat
 	'''
 	# input_combat_name = input('Name of combat: ').lower()
 	
-	file_info = get_files_from_directory() # [['20220725', '081517', 'battle of later that afternoon'],..]
+	file_info = get_combat_file() # [['20220725', '081517', 'battle of later that afternoon'],..]
 	# Give options to select from 3 most recent battles
 	print('Select from the 3 most recent battles:')
 	combat_selection_dict = {1: '', 2: '', 3: ''}
@@ -287,13 +310,16 @@ def resume_combat():
 		print(str(k) + ') ', v)
 	selection_input = int(input('\nSelect a battle by list number: '))
 	print('You have selected: ' + combat_selection_dict[selection_input])
-	combat_file = get_files_from_directory(True, file_selection_dict[selection_input])
-	print(json.load(open('combats/' + combat_file)))
+	combat_file = get_combat_file(True, file_selection_dict[selection_input])
+	return json.load(open('combats/' + combat_file))
 
-		
+def resume_combat():
+	# get combatants
+	# get combat details
+	combat_dict = get_combat_details()
+	print(combat_dict)
 
-
-def main():
+def run_combat():
 	combatants = []
 	combatants.extend(player_characters())
 	combatants.extend(nonplayer_characters())
@@ -301,9 +327,13 @@ def main():
 	combatants = tiebreaker(combatants)
 	combat = round_order(combatants)
 	write_combat_to_file(combat)
+
+def main():
+	run_combat()
 	
 if __name__ == '__main__':
 	# main()
+	# test_combat()
 	# test_tiebreak()
 	resume_combat()
 	
