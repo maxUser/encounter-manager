@@ -26,8 +26,8 @@ class Character:
 	def print_character(self):
 		print(self.name, self.initiative, self.dex_bonus)
 		
-	def __str__(self):
-		return self.name
+	# def __str__(self):
+	# 	return self.name
 		
 class Combat:
 	def __init__(self, name):
@@ -40,8 +40,8 @@ class Combat:
 		print(self.name)
 		for k, v in self.rounds.items():
 			print(k, v)
-	def __str__(self):
-		return self.name
+	# def __str__(self):
+	# 	return self.name
 		
 def test_combat():
 	f = open('test_combat.txt', 'r')
@@ -259,10 +259,11 @@ def write_combat_to_file(combat):
 	directory = 'combats'
 	path = directory + '/' + filename
 	try:
-		with open(path, 'wb') as outfile:
-			pickle.dump(combat, outfile)
+		with open(path, 'wb') as f:
+			print(combat)
+			pickle.dump(combat, f)
 	except Exception as e:
-		print(e)
+		print('Exception: ', e)
 
 def get_combat_file(return_file=False, date_time=()):
 	# Get files from directory
@@ -270,17 +271,12 @@ def get_combat_file(return_file=False, date_time=()):
 	directory = os.fsdecode('combats')
 	for file in os.listdir(directory):
 		filename = os.fsdecode(file)
-		if filename[-1] == 'e':
-			print(pickle.load(filename))
-		datetime_re = re.compile('[0-9]+')
-		date_and_time = datetime_re.findall(filename) # returns ['20220721', '204351']
+		date_and_time = [filename[0:9], filename[10:16]] # returns ['20220721', '204351']
 		if return_file and date_time:
 			if date_time[0] == date_and_time[0] and date_time[1] == date_and_time[1]:
-				return file
-		combat_name_re = re.compile('_[a-zA-Z]+', re.IGNORECASE)
-		list_of_words = combat_name_re.findall(filename)
-		list_of_words = [x.strip('_').lower() for x in list_of_words]
-		file_combat_name = ' '.join(y for y in list_of_words)
+				return filename
+		period_index = filename.index('.')
+		file_combat_name = filename[16:period_index].replace('_', ' ')
 		date_and_time.append(file_combat_name)
 		file_info.append(date_and_time)
 
@@ -288,11 +284,12 @@ def get_combat_file(return_file=False, date_time=()):
 
 def get_combat_details():
 	'''
-	Prompt if new or resuming old combat
+	TODO: Prompt if new or resuming old combat
 	'''
 	# input_combat_name = input('Name of combat: ').lower()
 	
 	file_info = get_combat_file() # [['20220725', '081517', 'battle of later that afternoon'],..]
+	# print(file_info)
 	# Give options to select from 3 most recent battles
 	print('Select from the 3 most recent battles:')
 	combat_selection_dict = {1: '', 2: '', 3: ''}
@@ -311,13 +308,16 @@ def get_combat_details():
 	selection_input = int(input('\nSelect a battle by list number: '))
 	print('You have selected: ' + combat_selection_dict[selection_input])
 	combat_file = get_combat_file(True, file_selection_dict[selection_input])
-	return json.load(open('combats/' + combat_file))
+	with open('combats/' + combat_file, 'rb') as f:
+		return pickle.load(f)
 
 def resume_combat():
 	# get combatants
 	# get combat details
-	combat_dict = get_combat_details()
-	print(combat_dict)
+	combat = get_combat_details()
+	print(combat.rounds)
+	for char in combat.combatants:
+		combat.combatants['char']
 
 def run_combat():
 	combatants = []
@@ -333,7 +333,8 @@ def main():
 	
 if __name__ == '__main__':
 	# main()
-	# test_combat()
+	
 	# test_tiebreak()
+	# test_combat()
 	resume_combat()
 	

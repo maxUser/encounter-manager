@@ -5,7 +5,7 @@ Goblin
 3
 2
 q
-Battle of Trog Hill
+Battle of Pickle Deserialization2
 Hit Trog1 for 3 dmg
 Hit Pierre for 1 dmg
 Miss
