@@ -21,13 +21,10 @@ class Character:
 		self.initiative = initiative
 		self.dex_bonus = dex_bonus
 		self.pc = pc
-		self.roll_off = 0
-		
+		self.roll_off = 0	
 	def print_character(self):
 		print(self.name, self.initiative, self.dex_bonus)
-		
-	# def __str__(self):
-	# 	return self.name
+
 		
 class Combat:
 	def __init__(self, name):
@@ -40,8 +37,6 @@ class Combat:
 		print(self.name)
 		for k, v in self.rounds.items():
 			print(k, v)
-	# def __str__(self):
-	# 	return self.name
 		
 def test_combat():
 	f = open('test_combat.txt', 'r')
@@ -271,15 +266,14 @@ def get_combat_file(return_file=False, date_time=()):
 	directory = os.fsdecode('combats')
 	for file in os.listdir(directory):
 		filename = os.fsdecode(file)
-		date_and_time = [filename[0:9], filename[10:16]] # returns ['20220721', '204351']
+		date_and_time = [filename[0:8], filename[9:15]] # returns ['20220721', '204351']
 		if return_file and date_time:
 			if date_time[0] == date_and_time[0] and date_time[1] == date_and_time[1]:
 				return filename
-		period_index = filename.index('.')
-		file_combat_name = filename[16:period_index].replace('_', ' ')
+		index_of_period = filename.index('.')
+		file_combat_name = filename[16:index_of_period].replace('_', ' ')
 		date_and_time.append(file_combat_name)
 		file_info.append(date_and_time)
-
 	return sorted(file_info, key=lambda file_info:[file_info[0],file_info[1]], reverse=True)
 
 def get_combat_details():
@@ -289,13 +283,13 @@ def get_combat_details():
 	# input_combat_name = input('Name of combat: ').lower()
 	
 	file_info = get_combat_file() # [['20220725', '081517', 'battle of later that afternoon'],..]
-	# print(file_info)
-	# Give options to select from 3 most recent battles
-	print('Select from the 3 most recent battles:')
+	# Give options to select from 'num_battles_displayed' most recent battles
+	num_battles_displayed = 3
+	print('Select from the {} most recent battles:'.format(num_battles_displayed))
 	combat_selection_dict = {1: '', 2: '', 3: ''}
 	file_selection_dict = {1: '', 2: '', 3: ''}
 	i = 1
-	for combat_file in file_info[0:3]:
+	for combat_file in file_info[0:num_battles_displayed]:
 		combat_name = combat_file[2].title()
 		combat_date = combat_file[0][0:4] + '/' + calendar.month_abbr[int(combat_file[0][4:6])] + '/' + combat_file[0][6:8]
 		combat_time = combat_file[1][0:2] + ':' + combat_file[1][2:4] + ':' + combat_file[1][4:6]
