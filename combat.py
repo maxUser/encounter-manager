@@ -1,7 +1,6 @@
-import re
 import os
 import csv
-import json
+import sys
 import pickle
 import calendar
 from random import randint
@@ -23,14 +22,13 @@ class Character:
 		self.pc = pc
 		self.roll_off = 0	
 	def print_character(self):
-		print(self.name, self.initiative, self.dex_bonus)
+		print('{}\n\tinitiative: {} [{}]'.format(self.name, self.initiative, self.dex_bonus))
 
-		
 class Combat:
 	def __init__(self, name):
 		self.name = name
 		self.rounds = {}
-		self.combatants = {}
+		self.combatants = []
 	def add_round(self, round):
 		self.rounds.update(round)
 	def print_combat(self):
@@ -45,7 +43,7 @@ def test_combat():
 	combatants.extend(nonplayer_characters(f))
 	combatants.sort(key=lambda x:x.initiative, reverse=True)
 	combatants = tiebreaker(combatants)
-	combat = round_order(combatants, f)
+	combat = round_order(combatants, None, f)
 	write_combat_to_file(combat)
 	f.close()
 
@@ -152,14 +150,20 @@ def create_combat(combatants, f):
 	combat = Combat(combat_name)
 	# add combatants to combat object
 	for combatant in combatants:
-		combat.combatants[combatant.name] = combatant
+		combat.combatants.append(combatant)
 	return combat
 
-def round_order(combatants, f=False):
+def round_order(combatants, combat=None, f=False):
 	print_initiative_order(combatants)
-	combat = create_combat(combatants, f)
-	round = 1
+	round = 0
 	round_dict = {}
+	if not combat:
+		combat = create_combat(combatants, f)
+		round = 1
+	else:
+		# resume existing combat
+		round = max(combat.rounds, key=int) + 1
+		
 	# Loop through rounds of combat
 	while True:
 		round_dict[round] = {} # {1:{'Ronan': 'hit goblin for 2 dmg', 'Pierre'...}, 2:{}}
@@ -248,14 +252,14 @@ def tiebreaker(combatants):
 	
 def write_combat_to_file(combat):
 	print('printing {} to file'.format(combat.name))
-	print(combat.rounds)
-	print(combat.combatants)
+	# print(combat.rounds)
+	# print(combat.combatants)
 	filename = datetime.now().strftime('%Y%m%d_%H%M%S_{}.pickle'.format(combat.name.replace(' ','_')))
 	directory = 'combats'
 	path = directory + '/' + filename
 	try:
 		with open(path, 'wb') as f:
-			print(combat)
+			# print(combat)
 			pickle.dump(combat, f)
 	except Exception as e:
 		print('Exception: ', e)
@@ -299,21 +303,24 @@ def get_combat_details():
 		i+=1
 	for k, v in combat_selection_dict.items():
 		print(str(k) + ') ', v)
-	selection_input = int(input('\nSelect a battle by list number: '))
+	selection_input = int(input('\nSelect a combat by list number: '))
 	print('You have selected: ' + combat_selection_dict[selection_input])
 	combat_file = get_combat_file(True, file_selection_dict[selection_input])
 	with open('combats/' + combat_file, 'rb') as f:
 		return pickle.load(f)
 
+def read_pickled_file():
+	combat = get_combat_details()
+	print(combat.rounds)
+
 def resume_combat():
 	# get combatants
 	# get combat details
 	combat = get_combat_details()
-	print(combat.rounds)
-	for char in combat.combatants:
-		combat.combatants['char']
+	combat = round_order(combat.combatants, combat)
+	write_combat_to_file(combat)
 
-def run_combat():
+def start_combat():
 	combatants = []
 	combatants.extend(player_characters())
 	combatants.extend(nonplayer_characters())
@@ -322,13 +329,21 @@ def run_combat():
 	combat = round_order(combatants)
 	write_combat_to_file(combat)
 
+def run():
+	new_or_existing = input('Combat:\n1) [N]ew\n2) [E]xisting\n: ').lower()
+	if new_or_existing == 'n' or new_or_existing == 'new' or new_or_existing == '1':
+		start_combat()
+	elif new_or_existing == 'e' or new_or_existing == 'existing' or new_or_existing == '2':
+		resume_combat()
+
 def main():
-	run_combat()
+	run()
 	
 if __name__ == '__main__':
-	# main()
+	main()
 	
 	# test_tiebreak()
 	# test_combat()
-	resume_combat()
+	# resume_combat()
+	# read_pickled_file()
 	
