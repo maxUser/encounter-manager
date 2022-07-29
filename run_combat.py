@@ -9,7 +9,6 @@ from Character import Character
 from Combat import Combat
 
 '''
-	TODO: ask to add new monsters to monsters.csv
 	TODO: ability to manually rearrange initiative order
 	TODO: thorough documentation of everything
 '''
@@ -35,6 +34,14 @@ def test_tiebreak():
 	f.close()
 
 def player_characters():
+	'''Create list of Character objects to represent the player characters
+
+	Returns
+	-------
+	pcs : list
+		list of Character objects
+	'''
+
 	pc_list = ['Dennis Le Menace', 'Pierre', 'Ronan', 'Dame Romaine']
 	pcs = []
 	for pc in pc_list:
@@ -54,6 +61,19 @@ def player_characters():
 	return pcs
 
 def nonplayer_characters(f=False):
+	'''Ask user for monsters in combat. Create list of Character objects containing each monster.
+
+	Parameters
+	----------
+	f : file object, optional
+		file used for testing
+
+	Returns
+	-------
+	npc_list : list
+		list of Character objects
+	'''
+
 	npc_name = ''
 	npc_list = []
 	while True:
@@ -81,6 +101,11 @@ def nonplayer_characters(f=False):
 			npc_list.append(Character(npc_name, get_npc_init(dex_bonus), dex_bonus, False))
 	return npc_list
 
+def add_monster_to_file(new_monster):
+	with open('monsters.csv', 'a', newline='') as csvfile:
+		csv_writer = csv.writer(csvfile)
+		csv_writer.writerow(new_monster)
+
 def get_dex_bonus(char_name):
 	dex_bonus = 0
 	monster_file = open('monsters.csv', 'r')
@@ -90,6 +115,9 @@ def get_dex_bonus(char_name):
 			return int(monster_row[1])
 	monster_file.close()
 	dex_bonus = get_quantity_input(char_name + ' dex bonus: ')
+	add_monster = get_yes_no_input('Save monster to file [y/n]: ')
+	if add_monster == 'y':
+		add_monster_to_file([char_name.lower(), dex_bonus])
 	return dex_bonus
 	
 def get_npc_init(dex_bonus):
@@ -122,9 +150,9 @@ def get_file_name_input():
 			print('Illegal input - combat name may not contain any of the following characters:')
 			print('<  >  :  \"  /  \\  |  ?  *')
 
-def get_yes_no_input():
+def get_yes_no_input(input_message):
 	while True:
-		response = input('Combat over [y/n]: ').lower()
+		response = input(input_message).lower()
 		if response == 'y' or response == 'yes':
 			return 'y'
 		elif response == 'n' or response == 'no':
@@ -198,7 +226,7 @@ def round_order(combatants, combat=None, f=False):
 			over = f.readline().strip()
 			print('Combat over [y/n]: ', over)
 		else:
-			over = get_yes_no_input()
+			over = get_yes_no_input('Combat over [y/n]: ')
 		if over == 'y':
 			combat.add_round(round_dict)
 			break
