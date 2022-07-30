@@ -1,6 +1,5 @@
 import os
 import csv
-import sys
 import pickle
 import calendar
 from random import randint
@@ -11,7 +10,9 @@ from Combat import Combat
 '''
 	TODO: ability to manually rearrange initiative order
 '''
-		
+# ############## #
+# Test functions #
+# ############## #		
 def test_combat():
 	f = open('test_combat.txt', 'r')
 	combatants = []
@@ -32,6 +33,9 @@ def test_tiebreak():
 	combatants = tiebreaker(combatants)
 	f.close()
 
+# ####################### #
+# Combatant instantiation #
+# ####################### #
 def player_characters():
 	'''Create list of Character objects to represent the player characters
 
@@ -45,16 +49,16 @@ def player_characters():
 	pcs = []
 	for pc in pc_list:
 		# pc_init = int(randint(1,20))
-		pc_init = 0
-		if pc == 'Dennis Le Menace':
-			pc_init = 5
-		elif pc == 'Pierre':
-			pc_init = 21
-		elif pc == 'Ronan':
-			pc_init = 21
-		elif pc == 'Dame Romaine':
-			pc_init = 14
-		# pc_init = get_quantity_input('{} initiative roll: '.format(pc))
+		# pc_init = 0
+		# if pc == 'Dennis Le Menace':
+		# 	pc_init = 5
+		# elif pc == 'Pierre':
+		# 	pc_init = 21
+		# elif pc == 'Ronan':
+		# 	pc_init = 21
+		# elif pc == 'Dame Romaine':
+		# 	pc_init = 14
+		pc_init = get_quantity_input('{} initiative roll: '.format(pc))
 		pc_dex_bonus = get_dex_bonus(pc)
 		pcs.append(Character(pc, pc_init, pc_dex_bonus))
 	return pcs
@@ -100,18 +104,9 @@ def nonplayer_characters(f=False):
 			npc_list.append(Character(npc_name, get_npc_init(dex_bonus), dex_bonus, False))
 	return npc_list
 
-def add_character_to_file(new_character):
-	'''Add row containing character name and dexterity bonus to csv file.
-
-	Parameters
-	----------
-	new_monster : list
-		list containing two elements: character name and character dexterity bonus
-	'''
-
-	with open('monsters.csv', 'a', newline='') as csvfile:
-		csv_writer = csv.writer(csvfile)
-		csv_writer.writerow(new_character)
+# ############### #
+# 'Get' functions #
+# ############### #
 
 def get_dex_bonus(char_name):
 	'''Get the dexterity bonus of a character either from a file or user input. 
@@ -155,23 +150,6 @@ def get_npc_init(dex_bonus):
 	'''
 
 	return int(randint(1,20) + dex_bonus)
- 
-def print_initiative_order(combatants):
-	'''A function to print out the initiative order of the combat.
-
-	Parameters
-	----------
-	combatants : list
-		List of character objects particpating in the combat
-	'''
-
-	print('INITIATIVE ORDER:')
-	for char in combatants:
-		if char.roll_off == 0:
-			print('{}: {} ({})'.format(char.initiative, char.name, char.dex_bonus))
-		else:
-			print('{}: {} ({}) - ROLL OFF={}'.format(char.initiative, char.name, char.dex_bonus, char.roll_off))
-	print()
 
 def get_quantity_input(input_message):
 	'''A function to get the verify an integer input from the user. Will loop until integer entered.
@@ -281,6 +259,10 @@ def get_new_or_existing_combat_input():
 		else:
 			print('Invalid input - use \'n\' or \'e\'')
 
+# ######################## #
+# Combat-related functions #
+# ######################## #
+
 def create_combat(combatants, f=False):
 	'''Instantiate a combat object.
 
@@ -309,6 +291,23 @@ def create_combat(combatants, f=False):
 	for combatant in combatants:
 		combat.combatants.append(combatant)
 	return combat
+
+def print_initiative_order(combatants):
+	'''A function to print out the initiative order of the combat.
+
+	Parameters
+	----------
+	combatants : list
+		List of character objects particpating in the combat
+	'''
+
+	print('INITIATIVE ORDER:')
+	for char in combatants:
+		if char.roll_off == 0:
+			print('{}: {} ({})'.format(char.initiative, char.name, char.dex_bonus))
+		else:
+			print('{}: {} ({}) - ROLL OFF={}'.format(char.initiative, char.name, char.dex_bonus, char.roll_off))
+	print()
 
 def round_order(combatants, combat=None, f=False):
 	'''Loop through the combatants in a combat, simulating a D&D combat encounter.
@@ -434,7 +433,11 @@ def tiebreaker(combatants):
 					combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1] = sorted(combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1], key=lambda x:x.roll_off, reverse=True)
 					print_initiative_order(combatants)
 	return combatants	
-	
+
+# ############# #
+# File handling #
+# ############# #
+
 def write_combat_to_file(combat):
 	'''A function which creates a file with a unique name that stores a serialized combat object.
 
@@ -453,6 +456,19 @@ def write_combat_to_file(combat):
 			pickle.dump(combat, f)
 	except Exception as e:
 		print('Exception: ', e)
+
+def add_character_to_file(new_character):
+	'''Add row containing character name and dexterity bonus to csv file.
+
+	Parameters
+	----------
+	new_monster : list
+		list containing two elements: character name and character dexterity bonus
+	'''
+
+	with open('monsters.csv', 'a', newline='') as csvfile:
+		csv_writer = csv.writer(csvfile)
+		csv_writer.writerow(new_character)
 
 def get_combat_file(return_file=False, date_time=()):
 	'''A function which returns combat file information (combat name, date, time) from a directory.
@@ -526,6 +542,10 @@ def read_pickled_combat_file():
 	print(combat.rounds)
 	for combatant in combat.combatants:
 		print(combatant.print_character())
+
+# ################## #
+# Start your engines #
+# ################## #
 
 def resume_combat():
 	'''A function to resume a combat from a file
