@@ -10,7 +10,6 @@ from Combat import Combat
 
 '''
 	TODO: ability to manually rearrange initiative order
-	TODO: thorough documentation of everything
 '''
 		
 def test_combat():
@@ -65,7 +64,7 @@ def nonplayer_characters(f=False):
 
 	Parameters
 	----------
-	f : file object, optional
+	f : file object (optional)
 		file used for testing
 
 	Returns
@@ -101,13 +100,34 @@ def nonplayer_characters(f=False):
 			npc_list.append(Character(npc_name, get_npc_init(dex_bonus), dex_bonus, False))
 	return npc_list
 
-def add_monster_to_file(new_monster):
+def add_character_to_file(new_character):
+	'''Add row containing character name and dexterity bonus to csv file.
+
+	Parameters
+	----------
+	new_monster : list
+		list containing two elements: character name and character dexterity bonus
+	'''
+
 	with open('monsters.csv', 'a', newline='') as csvfile:
 		csv_writer = csv.writer(csvfile)
-		csv_writer.writerow(new_monster)
+		csv_writer.writerow(new_character)
 
 def get_dex_bonus(char_name):
-	dex_bonus = 0
+	'''Get the dexterity bonus of a character either from a file or user input. 
+	Also, since this file checks if a character exists in monster.csv, it calls the function to add new characters to the file.
+
+	Parameters
+	----------
+	char_name : str
+		Name of character who's dexterity bonus is required
+
+	Returns
+	-------
+	dex_bonus : int
+		Number representing the dexterity bonus of the character
+	'''
+
 	monster_file = open('monsters.csv', 'r')
 	monsters = csv.reader(monster_file)
 	for monster_row in monsters:
@@ -117,13 +137,34 @@ def get_dex_bonus(char_name):
 	dex_bonus = get_quantity_input(char_name + ' dex bonus: ')
 	add_monster = get_yes_no_input('Save monster to file [y/n]: ')
 	if add_monster == 'y':
-		add_monster_to_file([char_name.lower(), dex_bonus])
+		add_character_to_file([char_name.lower(), dex_bonus])
 	return dex_bonus
 	
 def get_npc_init(dex_bonus):
+	'''Return a random number between 1 and 20 plus dexterity bonus.
+
+	Parameters
+	----------
+	dex_bonus : int
+		dexterity bonus
+
+	Returns
+	-------
+	int
+		number representing the initiative count
+	'''
+
 	return int(randint(1,20) + dex_bonus)
  
 def print_initiative_order(combatants):
+	'''A function to print out the initiative order of the combat.
+
+	Parameters
+	----------
+	combatants : list
+		List of character objects particpating in the combat
+	'''
+
 	print('INITIATIVE ORDER:')
 	for char in combatants:
 		if char.roll_off == 0:
@@ -133,6 +174,19 @@ def print_initiative_order(combatants):
 	print()
 
 def get_quantity_input(input_message):
+	'''A function to get the verify an integer input from the user. Will loop until integer entered.
+
+	Parameters
+	----------
+	input_message : str
+		Message to be display to the user
+
+	Returns
+	-------
+	: int
+		an integer given by the user
+	'''
+
 	while True:
 		try:
 			return int(input(input_message))
@@ -140,6 +194,15 @@ def get_quantity_input(input_message):
 			print('Invalid input - please enter a number.')
 
 def get_file_name_input():
+	'''A function to get the name of the combat, which forms part of a file name and, therefore, requires special rules.
+	Loops until user input is valid.
+
+	Returns
+	-------
+	combat_name : str
+		Name of the combat
+	'''
+
 	illegal_chars = ['<', '>', ':', '\"', '/', '\\', '|', '?', '*']
 	while True:
 		combat_name = input('Name of combat: ')
@@ -151,6 +214,19 @@ def get_file_name_input():
 			print('<  >  :  \"  /  \\  |  ?  *')
 
 def get_yes_no_input(input_message):
+	'''A function to get a yes or no response from the user. Loops until user input is valid.
+
+	Parameters
+	----------
+	input_message : str
+		Message to be display to the user
+
+	Returns
+	-------
+	y/n: str
+		A string representing the user's selection
+	'''
+
 	while True:
 		response = input(input_message).lower()
 		if response == 'y' or response == 'yes':
@@ -161,6 +237,22 @@ def get_yes_no_input(input_message):
 			print('Invalid input - use \'y\' or \'n\'')			
 
 def get_list_selection_input(list_length, input_message='Your input: '):
+	'''A function to verify a user's input when selecting options from a list (e.g. selecting previous combats).
+
+	Parameters
+	----------
+	list_length : int
+		The number of elements in the list
+
+	input_message : str (optional)
+		Message to be display to the user
+
+	Returns
+	-------
+	selection: int
+		A number corresponding to one of the options presented to the user
+	'''
+
 	while True:
 		try:
 			selection = int(input(input_message))
@@ -172,6 +264,14 @@ def get_list_selection_input(list_length, input_message='Your input: '):
 			print('Invalid input - please enter a number between 1 and {}.'.format(list_length))
 
 def get_new_or_existing_combat_input():
+	'''A function to verify a user's input for new or existing combat. Loops until valid input found.
+
+	Returns
+	-------
+	n/e: str
+		A string representing the user's selection
+	'''
+
 	while True:
 		new_or_existing = input('\nCombat:\n1) [N]ew\n2) [E]xisting\n: ').lower()
 		if new_or_existing == 'n' or new_or_existing == 'new' or new_or_existing == '1':
@@ -181,7 +281,22 @@ def get_new_or_existing_combat_input():
 		else:
 			print('Invalid input - use \'n\' or \'e\'')
 
-def create_combat(combatants, f):
+def create_combat(combatants, f=False):
+	'''Instantiate a combat object.
+
+	Parameters
+	----------
+	combatants : list
+		List of character objects particpating in the combat
+	f : file object (optional)
+		file used for testing
+
+	Returns
+	-------
+	combat : Combat object
+		A Combat object
+	'''
+
 	if f:
 		combat_name = f.readline().strip()
 		print('Combat name: ', combat_name)
@@ -196,6 +311,23 @@ def create_combat(combatants, f):
 	return combat
 
 def round_order(combatants, combat=None, f=False):
+	'''Loop through the combatants in a combat, simulating a D&D combat encounter.
+
+	Parameters
+	----------
+	combatants : list
+		List of character objects particpating in the combat
+	combat : Combat object (optional)
+		A Combat object
+	f : file object (optional)
+		file used for testing
+
+	Returns
+	-------
+	combat : Combat object
+		A Combat object
+	'''
+
 	print_initiative_order(combatants)
 	round = 0
 	round_dict = {}
@@ -235,9 +367,20 @@ def round_order(combatants, combat=None, f=False):
 	return combat
 
 def tiebreaker(combatants):
-	'''Args: Combatants is a list of all combatants as Character objects sorted by Character.initiative
-	   TODO: reduce duplicate code
+	'''A function to break ties between characters' initiative counts and, if necessary, their dexterity bonuses.
+	TODO: reduce duplicate code
+
+	Parameters
+	----------
+	combatants : list
+		List of character objects particpating in the combat
+
+	Returns
+	-------
+	combatants : list
+		List of character objects particpating in the combat, in correct order
 	'''
+
 	tie_start_ind = 0
 	tie_end_ind = 0
 	print_initiative_order(combatants)
@@ -293,21 +436,40 @@ def tiebreaker(combatants):
 	return combatants	
 	
 def write_combat_to_file(combat):
+	'''A function which creates a file with a unique name that stores a serialized combat object.
+
+	Parameters
+	----------
+	combat : Combat object
+		A Combat object
+	'''
+
 	print('Saving {} to file'.format(combat.name))
-	# print(combat.rounds)
-	# print(combat.combatants)
 	filename = datetime.now().strftime('%Y%m%d_%H%M%S_{}.pickle'.format(combat.name.replace(' ','_')))
 	directory = 'combats'
 	path = directory + '/' + filename
 	try:
 		with open(path, 'wb') as f:
-			# print(combat)
 			pickle.dump(combat, f)
 	except Exception as e:
 		print('Exception: ', e)
 
 def get_combat_file(return_file=False, date_time=()):
-	# Get files from directory
+	'''A function which returns combat file information (combat name, date, time) from a directory.
+
+	Parameters
+	----------
+	return_file : boolean (optional, I think this parameter is unnecessary)
+		Flag whether or not to return the file
+	date_time : tuple
+		tuple elements consisting of the date and time
+
+	Returns
+	-------
+	file_info : list
+		List of lists. The inner lists are comprised of a combat file name, date, and time.
+	'''
+
 	file_info = []
 	directory = os.fsdecode('combats')
 	for file in os.listdir(directory):
@@ -323,13 +485,20 @@ def get_combat_file(return_file=False, date_time=()):
 	return sorted(file_info, key=lambda file_info:[file_info[0],file_info[1]], reverse=True)
 
 def get_combat_details(num_battles_displayed):
-	'''
-	Args:
+	'''A function which displays 'num_battles_displayed' most recent combats and asks the user to make a selection.
+
+	Parameters
+	----------
+	num_battles_displayed : int
+		The number of most recent combats to be displayed
+
+	Returns
+	-------
+	Combat : Combat Object
+		Deserialized user selected file
 	'''
 
-	
 	file_info = get_combat_file() # [['20220725', '081517', 'battle of later that afternoon'],..]
-	# Give options to select from 'num_battles_displayed' most recent battles
 	print('Select from the {} most recent battles:'.format(num_battles_displayed))
 	combat_selection_dict = {1: '', 2: '', 3: ''}
 	file_selection_dict = {1: '', 2: '', 3: ''}
@@ -350,18 +519,25 @@ def get_combat_details(num_battles_displayed):
 	with open('combats/' + combat_file, 'rb') as f:
 		return pickle.load(f)
 
-def read_pickled_file():
+def read_pickled_combat_file():
+	'''A function to print the contents of a combat file.
+	'''
 	combat = get_combat_details(5)
 	print(combat.rounds)
+	for combatant in combat.combatants:
+		print(combatant.print_character())
 
 def resume_combat():
-	# get combatants
-	# get combat details
+	'''A function to resume a combat from a file
+	'''
+
 	combat = get_combat_details(3)
 	combat = round_order(combat.combatants, combat)
 	write_combat_to_file(combat)
 
 def start_combat():
+	'''A function to start a new combat
+	'''
 	combatants = []
 	combatants.extend(player_characters())
 	combatants.extend(nonplayer_characters())
@@ -370,19 +546,17 @@ def start_combat():
 	combat = round_order(combatants)
 	write_combat_to_file(combat)
 
-def run():
+def main():
+	'''A function to ask the user if they want to start a new combat or continue a saved combat from a file
+	'''
 	new_or_existing = get_new_or_existing_combat_input()
 	if new_or_existing == 'n':
 		start_combat()
 	else:
 		resume_combat()
-
-def main():
-	run()
 	
 if __name__ == '__main__':
 	main()
-	
 	# test_tiebreak()
 	# test_combat()
 	# resume_combat()
