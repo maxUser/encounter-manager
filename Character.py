@@ -27,8 +27,15 @@ class Character:
 		self.dex_bonus = dex_bonus
 		self.pc = pc
 		self.roll_off = 0	
+	
 	def print_character(self):
 		if self.roll_off > 0:
-			print('{}\n\tinitiative: {} [{}]'.format(self.name, self.initiative, self.dex_bonus))
-		else:
 			print('{}\n\tinitiative: {} [{}] - ROLL OFF={}'.format(self.name, self.initiative, self.dex_bonus, self.roll_off))
+		else:
+			print('{}\n\tinitiative: {} [{}]'.format(self.name, self.initiative, self.dex_bonus))
+
+	def __str__(self):
+		if self.roll_off > 0:
+			return '{} - {} [{}] - ROLL OFF={}'.format(self.initiative, self.name, self.dex_bonus, self.roll_off)
+		else:
+			return '{} - {} [{}]'.format(self.initiative, self.name, self.dex_bonus)

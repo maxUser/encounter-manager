@@ -500,7 +500,7 @@ def get_combat_file(return_file=False, date_time=()):
 		file_info.append(date_and_time)
 	return sorted(file_info, key=lambda file_info:[file_info[0],file_info[1]], reverse=True)
 
-def get_combat_details(num_battles_displayed):
+def display_combat_options(num_battles_displayed, gui=False):
 	'''A function which displays 'num_battles_displayed' most recent combats and asks the user to make a selection.
 
 	Parameters
@@ -515,7 +515,7 @@ def get_combat_details(num_battles_displayed):
 	'''
 
 	file_info = get_combat_file() # [['20220725', '081517', 'battle of later that afternoon'],..]
-	print('Select from the {} most recent battles:'.format(num_battles_displayed))
+	
 	combat_selection_dict = {1: '', 2: '', 3: ''}
 	file_selection_dict = {1: '', 2: '', 3: ''}
 	i = 1
@@ -527,21 +527,31 @@ def get_combat_details(num_battles_displayed):
 		combat_selection_dict[i] = combat_select
 		file_selection_dict[i] = (combat_file[0], combat_file[1])
 		i+=1
+	if gui:
+		return combat_selection_dict, file_selection_dict
+	print('Select from the {} most recent battles:'.format(num_battles_displayed))
 	for k, v in combat_selection_dict.items():
 		print(str(k) + ') ', v)
 	selection_input = get_list_selection_input(num_battles_displayed, '\nSelect a combat by list number: ')
-	print('You have selected: ' + combat_selection_dict[selection_input])
-	combat_file = get_combat_file(True, file_selection_dict[selection_input])
+	selection = combat_selection_dict[selection_input]
+	print('You have selected: ' + selection)
+	return selection_input, file_selection_dict
+
+def get_combat_based_on_selection(selection_input, file_selection_dict):
+	selected_file = file_selection_dict[selection_input]
+	combat_file = get_combat_file(True, selected_file)
 	with open('combats/' + combat_file, 'rb') as f:
 		return pickle.load(f)
 
 def read_pickled_combat_file():
 	'''A function to print the contents of a combat file.
 	'''
-	combat = get_combat_details(5)
-	print(combat.rounds)
+	selection_input, file_selection_dict = display_combat_options(5)
+	combat = get_combat_based_on_selection(selection_input, file_selection_dict)
+	combat.print_combat()
 	for combatant in combat.combatants:
-		print(combatant.print_character())
+		if combatant:
+			combatant.print_character()
 
 # ################## #
 # Start your engines #
@@ -551,7 +561,8 @@ def resume_combat():
 	'''A function to resume a combat from a file
 	'''
 
-	combat = get_combat_details(3)
+	selection, selected_file = display_combat_options(3)
+	combat = get_combat_based_on_selection(selection, selected_file)
 	combat = round_order(combat.combatants, combat)
 	write_combat_to_file(combat)
 
@@ -580,5 +591,5 @@ if __name__ == '__main__':
 	# test_tiebreak()
 	# test_combat()
 	# resume_combat()
-	# read_pickled_file()
+	# read_pickled_combat_file()
 	
