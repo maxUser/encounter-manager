@@ -23,8 +23,8 @@ class Combat:
 		self.name = name
 		self.rounds = {}
 		self.combatants = []
-	def add_round(self, round):
-		self.rounds.update(round)
+	def add_round(self, combatRound):
+		self.rounds.update(combatRound)
 	def print_combat(self):
 		print(self.name)
 		for k, v in self.rounds.items():

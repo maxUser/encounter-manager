@@ -98,7 +98,14 @@ class CombatManager:
 		ttk.Button(combatScreen, text='Next', command=lambda:self.iterateCombatants(combatScreen, combat, prevRoundListbox)).grid(column=13, row=2, stick=E, padx=10)
 
 	def goToPreviousCombatant(self, combatScreen, combat):
-		print('hi')
+		# remove current combatant label/text box
+		if self.allCombatantLabels:
+			self.allCombatantLabels[-1].destroy()
+			self.allActionTextboxes[-1].destroy()
+			self.allCombatantLabels.clear()
+			self.allActionTextboxes.clear()
+			self.rowIndex -= 1
+			self.turnIndex -= 1
 
 	def iterateCombatants(self, combatScreen, combat, prevRoundListbox):
 		'''Print the next combatant to list of combatants on screen. 
@@ -136,6 +143,7 @@ class CombatManager:
 			self.displayPreviousRounds(self.roundCount, self.currentRound, prevRoundListbox)
 			self.currentRound.clear()
 			self.turnIndex = 0
+			combat.print_combat()
 			# remove previous round label/boxes from middle panel
 
 		

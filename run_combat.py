@@ -556,7 +556,6 @@ def read_pickled_combat_file():
 # ################## #
 # Start your engines #
 # ################## #
-
 def resume_combat():
 	'''A function to resume a combat from a file
 	'''
