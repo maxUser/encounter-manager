@@ -16,7 +16,7 @@ class Combat:
 	add_round(round)
 		Adds the given round to the Combat's rounds dictionary
 	print_combat()
-		Prints a Combat's rounds in a human readable format
+		Prints Combat rounds in a human readable format
 	'''
 	
 	def __init__(self, name):

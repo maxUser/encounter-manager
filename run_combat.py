@@ -284,7 +284,7 @@ def create_combat(combatants, f=False):
 		print('Combat name: ', combat_name)
 	else:
 		combat_name = get_file_name_input()
-	print('Combat name: ', combat_name)	
+	# print('Combat name: ', combat_name)	
 	# create combat object
 	combat = Combat(combat_name)
 	# add combatants to combat object
@@ -328,41 +328,42 @@ def round_order(combatants, combat=None, f=False):
 	'''
 
 	print_initiative_order(combatants)
-	round = 0
+	roundCount = 0
 	round_dict = {}
 	if not combat:
 		combat = create_combat(combatants, f)
-		round = 1
+		roundCount = 1
 	else:
 		# resume existing combat
-		round = max(combat.rounds, key=int) + 1
+		roundCount = max(combat.rounds, key=int) + 1
 		
 	# Loop through rounds of combat
 	while True:
-		round_dict[round] = {} # {1:{'Ronan': 'hit goblin for 2 dmg', 'Pierre'...}, 2:{}}
+		round_dict[roundCount] = {} # {1:{'Ronan': 'hit goblin for 2 dmg', 'Pierre'...}, 2:{}}
 		print('========================')
 		print('========================')
-		print('======= ROUND {} ========'.format(str(round)))
+		print('======= ROUND {} ========'.format(str(roundCount)))
 		print('========================')
 		print('========================')
 		for i in range(len(combatants)):
 			print(combatants[i].name + '\'s turn')
 			if f:
-				round_dict[round][combatants[i].name] = f.readline().strip()
-				print('action: ', round_dict[round][combatants[i].name])
+				round_dict[roundCount][combatants[i].name] = f.readline().strip()
+				print('action: ', round_dict[roundCount][combatants[i].name])
 			else:
-				round_dict[round][combatants[i].name] = input(': ')
-		print('ROUND ' + str(round) + ' END')
+				round_dict[roundCount][combatants[i].name] = input(': ')
+		print('ROUND ' + str(roundCount) + ' END')
 		if f:
 			over = f.readline().strip()
 			print('Combat over [y/n]: ', over)
 		else:
 			over = get_yes_no_input('Combat over [y/n]: ')
+		print(round_dict)
 		if over == 'y':
 			combat.add_round(round_dict)
 			break
 		combat.add_round(round_dict)
-		round += 1
+		roundCount += 1
 	return combat
 
 def tiebreaker(combatants):
@@ -446,10 +447,16 @@ def write_combat_to_file(combat):
 	combat : Combat object
 		A Combat object
 	'''
-
+	directory = 'combats'
+	combatFiles = get_combat_file()
+	for combatFileName in combatFiles:
+		if combat.name in combatFileName:
+			# delete old combat file
+			filename = combatFileName[0] + '_' + combatFileName[1] + '_' + combatFileName[2].replace(' ', '_') + '.pickle'
+			path = directory + '/' + filename
+			os.remove(path)
 	print('Saving {} to file'.format(combat.name))
 	filename = datetime.now().strftime('%Y%m%d_%H%M%S_{}.pickle'.format(combat.name.replace(' ','_')))
-	directory = 'combats'
 	path = directory + '/' + filename
 	try:
 		with open(path, 'wb') as f:
@@ -515,9 +522,12 @@ def display_combat_options(num_battles_displayed, gui=False):
 	'''
 
 	file_info = get_combat_file() # [['20220725', '081517', 'battle of later that afternoon'],..]
-	
-	combat_selection_dict = {1: '', 2: '', 3: ''}
-	file_selection_dict = {1: '', 2: '', 3: ''}
+	combat_selection_dict = {}
+	file_selection_dict = {}
+	# for j in range(num_battles_displayed):
+	# 	combat_selection_dict[j+1] = ''
+	# 	file_selection_dict[j+1] = ''
+
 	i = 1
 	for combat_file in file_info[0:num_battles_displayed]:
 		combat_name = combat_file[2].title()
@@ -586,9 +596,9 @@ def main():
 		resume_combat()
 	
 if __name__ == '__main__':
-	main()
+	# main()
 	# test_tiebreak()
 	# test_combat()
 	# resume_combat()
-	# read_pickled_combat_file()
+	read_pickled_combat_file()
 	
