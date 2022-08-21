@@ -9,13 +9,15 @@ from run_combat import display_combat_options, get_combat_based_on_selection, wr
 from Combat import Combat
 from Character import Character
 
+# TODO battle of stalingrad starting at the wrong round
+
 class CombatManager:
 
 	def __init__(self, root):
-
 		self.turnIndex = 0
 		self.rowIndex = 0
 		self.roundCount = 0
+		self.nextCombatantInd = 999
 		self.roundDict = {}
 		self.currentRound = {}
 		self.allCombatantLabels = []
@@ -76,6 +78,11 @@ class CombatManager:
 		ttk.Button(existing, text='Select', command=lambda:self.existingCombatView(combat_selection_box, file_selection_dict, root, existing)).grid(column=1, row=2, sticky=W, pady=5)
 	
 	def displayPreviousRounds(self, roundNum, roundActions, listbox):
+		if listbox.get(0, 'end'):
+			# remove most recent round
+			if listbox.get(0, 'end')[-2] == roundNum:
+				listbox.delete('end')
+				listbox.delete('end')
 		listbox.insert('end', roundNum)
 		listbox.insert('end', roundActions)
 		
@@ -102,12 +109,21 @@ class CombatManager:
 		xScrollbar.config(command=prevRoundListbox.xview)
 
 		# display previous rounds in left panel listbox
-		rowCount = 1
+		highestRoundCount = 0
 		for k, v in combat.rounds.items():
-			if int(k) > self.roundCount:
-				self.roundCount = int(k) + 1
+			if int(k) > highestRoundCount:
+				highestRoundCount = int(k)
+			# if int(k) > self.roundCount:
+			# 	self.roundCount = int(k) + 1
 			self.displayPreviousRounds(k, v, prevRoundListbox)
-			rowCount+=2
+		
+		combatantsList = combat.combatants
+		print('len(combatantsList) ', len(combatantsList))
+		print('len(combat.rounds[highestRoundCount] ', len(combat.rounds[highestRoundCount]))
+		if len(combatantsList) > len(combat.rounds[highestRoundCount]):
+			self.roundCount = highestRoundCount
+		else:
+			self.roundCount = highestRoundCount + 1
 
 		'''
 			RIGHT: listbox/initiative order
@@ -116,7 +132,7 @@ class CombatManager:
 		initOrderListbox = Listbox(combatScreen, width=45, height=self.LISTBOX_HEIGHT)
 		initOrderListbox.grid(column=self.RIGHT_PANE_COLUMN, row=self.LISTBOX_ROW-1, rowspan=100, sticky=N, columnspan=6)
 		for combatant in combat.combatants:
-			initOrderListbox.insert('end', combatant)	
+			initOrderListbox.insert('end', combatant)
 
 		'''
 			MIDDLE: ROUND LABEL
@@ -137,8 +153,8 @@ class CombatManager:
 		combatOverBtn = ttk.Button(combatScreen, text='End Combat', bootstyle=ttk.DANGER, command=lambda:self.combatOver(combat))
 		combatOverBtn.grid(column=self.COMBAT_OVER_BTN_COLUMN, row=self.ITERATE_BTN_ROW, sticky=W, ipadx=2, padx=5)
 		self.allButtonsDict['combatOverBtn'] = combatOverBtn
-		# ttk.Button(combatScreen, text='Main', command=lambda:self.goToMainMenu(root)).grid(column=23, row=10, sticky=(S,E), padx=10, columnspan=6)
-
+		ttk.Button(combatScreen, text='Main', command=lambda:self.goToMainMenu(root)).grid(column=self.RIGHT_PANE_COLUMN+10, row=0, sticky=N)
+	
 	def combatOver(self, combat):
 		write_combat_to_file(combat)
 		print('combat over')
@@ -147,9 +163,6 @@ class CombatManager:
 		self.__init__(root)
 
 	def goToPreviousCombatant(self):
-		if self.turnIndex <= 2:
-			self.allButtonsDict['prevBtn']['state'] = 'disabled'
-			# self.allButtonsDict['prevBtn'].configure({"disabledbackground": "red"})
 		if self.allCombatantLabels:
 			# remove current combatant label/text box
 			self.allCombatantLabels[-1].destroy()
@@ -165,28 +178,30 @@ class CombatManager:
 				existingActionTextbox.grid(row=row-2)
 				self.allActionTextboxes[-1]['state'] = 'normal' # 'normal' to re-enable
 				self.allActionTextboxes[-1].config(background='white')
-
 			self.rowIndex -= 1
 			self.turnIndex -= 1
+		if len(self.allCombatantLabels) < 2:
+			self.allButtonsDict['prevBtn']['state'] = 'disabled'
+
+	def resumeMidRoundCheck(self, combat):
+		combatantsList = combat.combatants
+		if self.nextCombatantInd > self.turnIndex:
+			# required for continuing combat in which the most recent round was not completed
+			if self.roundCount in combat.rounds:
+				if len(combat.rounds[self.roundCount].keys()) < len(combatantsList):
+					for combatant in combatantsList:
+						if combatant.name in combat.rounds[self.roundCount].keys():
+							self.nextCombatantInd = combatantsList.index(combatant) + 1
+					self.turnIndex = self.nextCombatantInd
 
 	def iterateCombatants(self, combatScreen, combat, prevRoundListbox):
 		'''Print the next combatant to list of combatants on screen. 
 		'''
 
-		combatantsList = combat.combatants
-		if self.turnIndex > 0:
-			self.allButtonsDict['prevBtn']['state'] = 'normal'
+		# first, check if combat round resuming mid-turn
+		self.resumeMidRoundCheck(combat)
 
-		if self.turnIndex == len(combatantsList):
-			# remove previous round label/boxes from middle panel
-			for existingCombatantLabel in self.allCombatantLabels:
-				existingCombatantLabel.grid_remove()
-			for existingActionTextbox in self.allActionTextboxes:
-				existingActionTextbox.grid_remove()
-			self.allCombatantLabels.clear()
-			self.allActionTextboxes.clear()
-		# Printing the combatants and text boxes
-		# first, move existing label/text boxes/buttons down
+		# second, move existing label/text boxes/buttons down
 		currentCombatant = ''
 		if self.allCombatantLabels:
 			for existingCombatantLabel in self.allCombatantLabels:
@@ -201,26 +216,35 @@ class CombatManager:
 				row = existingActionTextbox.grid_info()['row']
 				# get action of currentCombatant
 				self.currentRound[currentCombatant] = existingActionTextbox.get('1.0', 'end')[:-1]
-				# print(combat.rounds[self.currentRound])
 				if self.roundCount not in combat.rounds:
 					combat.rounds.update({self.roundCount:{}})
 				# update combat object
 				combat.rounds[self.roundCount].update(self.currentRound)
 				existingActionTextbox.grid(column=self.MIDDLE_PANE_COLUMN+2, row=row+2, sticky=E, rowspan=2, columnspan=8)
-				existingActionTextbox['state'] = 'disabled' # 'normal' to re-enable
 				existingActionTextbox.config(background='#f0f0f0')
-		# second, check if round over
+			
+		# third, check if round over
+		combatantsList = combat.combatants
 		if self.turnIndex == len(combatantsList):
+			# update combat object
+			combat.rounds[self.roundCount].update(self.currentRound)
 			# update previous rounds panel
-			self.displayPreviousRounds(self.roundCount, self.currentRound, prevRoundListbox)
+			self.displayPreviousRounds(self.roundCount, combat.rounds[self.roundCount], prevRoundListbox)
 			# update round label
 			self.roundCount+=1
 			self.roundLabelList[0].config(text='Round ' + str(self.roundCount))
 			# reset some variables
 			self.turnIndex = 0
 			self.currentRound = {}
+			# remove previous round label/boxes from middle panel
+			for existingCombatantLabel in self.allCombatantLabels:
+				existingCombatantLabel.grid_remove()
+			for existingActionTextbox in self.allActionTextboxes:
+				existingActionTextbox.grid_remove()
+			self.allCombatantLabels.clear()
+			self.allActionTextboxes.clear()
 
-		# third, add new label/textbox
+		# fourth, add new label/textbox
 		newCombatantLabel = ttk.Label(combatScreen, text=combatantsList[self.turnIndex].name, font=self.tertiaryTitleFont)
 		newCombatantLabel.grid(column=self.MIDDLE_PANE_COLUMN, row=2, sticky=W, rowspan=2, columnspan=2)
 		self.allCombatantLabels.append(newCombatantLabel)
@@ -229,6 +253,13 @@ class CombatManager:
 		self.allActionTextboxes.append(newActionTextbox)
 		newActionTextbox.focus_set()
 
+		# fifth, change state of prev button
+		if len(self.allCombatantLabels) < 2:
+			self.allButtonsDict['prevBtn']['state'] = 'disabled'
+		else:
+			self.allButtonsDict['prevBtn']['state'] = 'normal'
+
+		# sixth, update variables
 		self.rowIndex += 1
 		self.turnIndex += 1
 		

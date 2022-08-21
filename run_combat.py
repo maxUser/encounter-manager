@@ -330,28 +330,48 @@ def round_order(combatants, combat=None, f=False):
 	print_initiative_order(combatants)
 	roundCount = 0
 	round_dict = {}
+	nextCombatantInd = -1
+	existingRoundDict = {}
+	existingRound = None
 	if not combat:
 		combat = create_combat(combatants, f)
 		roundCount = 1
 	else:
 		# resume existing combat
-		roundCount = max(combat.rounds, key=int) + 1
+		roundCount = max(combat.rounds, key=int)
+		existingRoundDict = combat.rounds[roundCount]
+		existingRound = True
 		
 	# Loop through rounds of combat
 	while True:
-		round_dict[roundCount] = {} # {1:{'Ronan': 'hit goblin for 2 dmg', 'Pierre'...}, 2:{}}
+		if existingRoundDict and existingRound:
+			# required for continuing combat in which the most recent round was not completed
+			combatantsThisRoundList = list(existingRoundDict.keys())
+			for combatant in combatants:
+				# combatants is an ordered list
+				if combatant.name in combatantsThisRoundList:
+					nextCombatantInd = combatants.index(combatant) + 1
+			round_dict = combat.rounds
+		else:
+			roundCount += 1
+			round_dict[roundCount] = {} # {1:{'Ronan': 'hit goblin for 2 dmg', 'Pierre'...}, 2:{}}
 		print('========================')
 		print('========================')
 		print('======= ROUND {} ========'.format(str(roundCount)))
 		print('========================')
 		print('========================')
 		for i in range(len(combatants)):
+			if nextCombatantInd > i and existingRound:
+				continue
 			print(combatants[i].name + '\'s turn')
 			if f:
 				round_dict[roundCount][combatants[i].name] = f.readline().strip()
 				print('action: ', round_dict[roundCount][combatants[i].name])
 			else:
+				print(round_dict)
 				round_dict[roundCount][combatants[i].name] = input(': ')
+			if i == len(combatants)-1:
+				existingRound = False
 		print('ROUND ' + str(roundCount) + ' END')
 		if f:
 			over = f.readline().strip()
@@ -363,7 +383,7 @@ def round_order(combatants, combat=None, f=False):
 			combat.add_round(round_dict)
 			break
 		combat.add_round(round_dict)
-		roundCount += 1
+		
 	return combat
 
 def tiebreaker(combatants):
@@ -596,9 +616,9 @@ def main():
 		resume_combat()
 	
 if __name__ == '__main__':
-	# main()
+	main()
 	# test_tiebreak()
 	# test_combat()
 	# resume_combat()
-	read_pickled_combat_file()
+	# read_pickled_combat_file()
 	
