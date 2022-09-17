@@ -21,10 +21,10 @@ class Character:
 		Prints a Character's attributes in a human readable format
 	'''
 
-	def __init__(self, name, initiative, dex_bonus=0, pc=True):
+	def __init__(self, name, dex_bonus=0, pc=True):
 		self.name = name
-		self.initiative = initiative
-		self.dex_bonus = dex_bonus
+		self.initiative = 0
+		self.dex_bonus = int(dex_bonus)
 		self.pc = pc
 		self.roll_off = 0	
 	
@@ -36,6 +36,6 @@ class Character:
 
 	def __str__(self):
 		if self.roll_off > 0:
-			return '{} - {} [{}] - ROLL OFF={}'.format(self.initiative, self.name, self.dex_bonus, self.roll_off)
+			return '{} [{}]:   {} - ROLL OFF={}'.format(self.initiative, self.dex_bonus, self.name, self.roll_off)
 		else:
-			return '{} - {} [{}]'.format(self.initiative, self.name, self.dex_bonus)
+			return '{} [{}]:   {} '.format(self.initiative, self.dex_bonus, self.name)

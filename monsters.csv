@@ -1,14 +1,35 @@
-monster,dex
-bandit,1
-bandit captain,3
-scout,2
-spy,2
-guard,1
-gladiator,2
-sanbalet,1
-skeletal alchemist,1
-dame romaine,-2
-dennis le menace,2
-ronan,1
-pierre,1
-goblin,2
+monster,dex, pc/npc
+bandit,1,npc
+bandit captain,3,npc
+scout,2,npc
+spy,2,npc
+guard,1,npc
+gladiator,2,npc
+sanbalet,1,npc
+skeletal alchemist,1,npc
+dame romaine,-2,pc
+dennis le menace,2,pc
+ronan,1,pc
+pierre,1,pc
+goblin,2,npc
+bugbear,2,npc
+bugbear chief,2,npc
+gnoll,1,npc
+testPC,5,pc
+tarrasque,0,npc
+testPC2,2,pc
+adult green dragon,1,npc
+green dragon wyrmling,1,npc
+ancient red dragon,0,npc
+hobgoblin,1,npc
+hobgoblin captain,2,npc
+hobgoblin warlord,2,npc
+kobold,2,npc
+kraken,0,npc
+lich,3,npc
+lizardfolk,0,npc
+werebear,0,npc
+wereboar,0,npc
+manticore,3,npc
+medusa,2,npc
+merfolk,1,npc

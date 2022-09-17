@@ -7,6 +7,11 @@ from datetime import datetime
 from Character import Character
 from Combat import Combat
 
+from tkinter import *
+import tkinter.font as tkFont
+from ttkbootstrap.constants import *
+import ttkbootstrap as ttk
+
 '''
 	TODO: ability to manually rearrange initiative order
 '''
@@ -58,9 +63,13 @@ def player_characters():
 		# 	pc_init = 21
 		# elif pc == 'Dame Romaine':
 		# 	pc_init = 14
-		pc_init = get_quantity_input('{} initiative roll: '.format(pc))
 		pc_dex_bonus = get_dex_bonus(pc)
-		pcs.append(Character(pc, pc_init, pc_dex_bonus))
+		pc = Character(pc, pc_dex_bonus)
+		pc_init = get_quantity_input('{} initiative roll: '.format(pc))
+		pc.initiative = pc_init
+		pcs.append(pc)
+		
+		
 	return pcs
 
 def nonplayer_characters(f=False):
@@ -99,9 +108,13 @@ def nonplayer_characters(f=False):
 			for i in range(num_npc):
 				# add consecutive numbers after each npc name
 				npc_multi = npc_name + str(i+1)
-				npc_list.append(Character(npc_multi, get_npc_init(dex_bonus), dex_bonus, False))
+				npc = Character(npc_multi, dex_bonus, False)
+				npc.initiative = get_npc_init(dex_bonus)
+				npc_list.append(npc)
 		else:
-			npc_list.append(Character(npc_name, get_npc_init(dex_bonus), dex_bonus, False))
+			npc = Character(npc_name, dex_bonus, False)
+			npc.initiative = get_npc_init(dex_bonus)
+			npc_list.append(npc)
 	return npc_list
 
 # ############### #
@@ -149,7 +162,7 @@ def get_npc_init(dex_bonus):
 		number representing the initiative count
 	'''
 
-	return int(randint(1,20) + dex_bonus)
+	return int(randint(1,20) + int(dex_bonus))
 
 def get_quantity_input(input_message):
 	'''A function to get the verify an integer input from the user. Will loop until integer entered.
@@ -327,7 +340,7 @@ def round_order(combatants, combat=None, f=False):
 		A Combat object
 	'''
 
-	print_initiative_order(combatants)
+	# print_initiative_order(combatants)
 	roundCount = 0
 	round_dict = {}
 	nextCombatantInd = -1
@@ -386,7 +399,7 @@ def round_order(combatants, combat=None, f=False):
 		
 	return combat
 
-def tiebreaker(combatants):
+def tiebreaker(combatants, gui=False):
 	'''A function to break ties between characters' initiative counts and, if necessary, their dexterity bonuses.
 	TODO: reduce duplicate code
 
@@ -400,10 +413,9 @@ def tiebreaker(combatants):
 	combatants : list
 		List of character objects particpating in the combat, in correct order
 	'''
-
 	tie_start_ind = 0
 	tie_end_ind = 0
-	print_initiative_order(combatants)
+	# print_initiative_order(combatants)
 	for i in range(len(combatants)):
 		# get start and end indices of tied combatants in list
 		# sort each tie set by dex bonus
@@ -427,7 +439,7 @@ def tiebreaker(combatants):
 			# search through the tied initiative set looking for tied dex bonuses
 			dex_bonus_tie_start_ind = 0
 			dex_bonus_tie_end_ind = 0
-			print_initiative_order(combatants)
+			# print_initiative_order(combatants)
 			for j in range(tie_start_ind, tie_end_ind+1):
 				# print('j: {}, tie_start:end {}:{}'.format(j, tie_start_ind, tie_end_ind))
 				dex_bonus_end_found = False
@@ -444,16 +456,45 @@ def tiebreaker(combatants):
 					dex_bonus_tie_end_ind = j
 					dex_bonus_end_found = True
 				if dex_bonus_end_found:
+					guiDexTieList = []
+					allRollOffEntries = []
 					print('ROLL OFF at {} dex bonus'.format(combatants[dex_bonus_tie_start_ind].dex_bonus))
 					for m in combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1]:
+						print('m: {}, {}'.format(m.name, m.pc))
 						if not m.pc:
 							m.roll_off = int(randint(1,20))
 							print('{} roll: {}'.format(m.name, m.roll_off))
 						else:
-							m.roll_off = get_quantity_input('{} roll: '.format(m.name))
+							if gui:
+								guiDexTieList.append(m)
+							else:
+								m.roll_off = get_quantity_input('{} roll: '.format(m.name))
+					if gui and guiDexTieList:
+						rollOffWindow = Toplevel()
+						rollOffWindow.wm_title("Roll Off")
+						titleLabel = ttk.Label(rollOffWindow, text='Roll Off! at initiative {} and dexterity bonus {}'.format(combatants[tie_start_ind].initiative, combatants[dex_bonus_tie_start_ind].dex_bonus))
+						titleLabel.grid(row=0, column=0, columnspan=2)
+						row = 1
+						for dexTiedCombatant in guiDexTieList:
+							rollOffLabel = ttk.Label(rollOffWindow, text=dexTiedCombatant.name)
+							rollOffLabel.grid(column=0, row=row, sticky=W, pady=5)
+							rollOffStr = StringVar()
+							rollOffEntry = Entry(rollOffWindow, textvariable=rollOffStr, width=3)
+							rollOffEntry.grid(column=1, row=row, pady=5)
+							allRollOffEntries.append((dexTiedCombatant.name, rollOffEntry))
+							row += 1
+						wait = IntVar()
+						b = ttk.Button(rollOffWindow, text="Okay", command=lambda: wait.set(1))
+						b.grid(row=row, column=2)
+						b.wait_variable(wait)
+						for entry in allRollOffEntries:
+							for x in combatants:
+								if entry[0] == x.name:
+									x.roll_off = int(entry[1].get())
+						rollOffWindow.destroy()
 					combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1] = sorted(combatants[dex_bonus_tie_start_ind:dex_bonus_tie_end_ind+1], key=lambda x:x.roll_off, reverse=True)
 					print_initiative_order(combatants)
-	return combatants	
+	return combatants
 
 # ############# #
 # File handling #
@@ -486,6 +527,7 @@ def write_combat_to_file(combat):
 
 def add_character_to_file(new_character):
 	'''Add row containing character name and dexterity bonus to csv file.
+	TODO: need to get NPC/PC info as well...
 
 	Parameters
 	----------
@@ -601,7 +643,6 @@ def start_combat():
 	combatants = []
 	combatants.extend(player_characters())
 	combatants.extend(nonplayer_characters())
-	combatants.sort(key=lambda x:x.initiative, reverse=True)
 	combatants = tiebreaker(combatants)
 	combat = round_order(combatants)
 	write_combat_to_file(combat)
