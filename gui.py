@@ -332,6 +332,38 @@ class CombatManager:
 		listbox.insert('end', roundNum)
 		listbox.insert('end', roundActions)
 
+	def moveUpInitiativeOrder(self, initOrderListbox):
+		try:
+			index = initOrderListbox.curselection()
+			index = index[0]
+			if not index or index == 0:
+				return
+			text=initOrderListbox.get(index)
+			initOrderListbox.delete(index)
+			initOrderListbox.insert(index-1, text)
+			initOrderListbox.pop(index)
+			initOrderListbox.insert(index-1, text)
+			initOrderListbox.selection_set(index-1)
+			initOrderListbox.selection_anchor(index-1)
+		except:
+			pass
+
+	def moveDownInitiativeOrder(self, initOrderListbox):
+		try:
+			index = initOrderListbox.curselection()
+			index = index[0]
+			if (not index and index != 0) or index == initOrderListbox.index("end")-1:
+				return
+			text=initOrderListbox.get(index)
+			initOrderListbox.delete(index)
+			initOrderListbox.insert(index+1, text)
+			initOrderListbox.pop(index)
+			initOrderListbox.insert(index+1, text)
+			initOrderListbox.selection_set(index+1)
+			initOrderListbox.selection_anchor(index+1)
+		except:
+			pass
+
 	def newCombatView(self, combatName):
 		root.geometry('1000x500')
 		newCombatView = ttk.Frame(root, padding='3 3 12 12')
@@ -375,6 +407,10 @@ class CombatManager:
 		for combatant in combatants:
 			initOrderListbox.insert('end', combatant)
 
+		ttk.Button(newCombatView, text='Main', bootstyle=ttk.LIGHT, command=lambda:self.goToMainMenu(root)).grid(column=self.RIGHT_PANE_COLUMN+10, row=0, sticky=N)
+		ttk.Button(newCombatView, text='Up', bootstyle=ttk.LIGHT, command=lambda:self.moveUpInitiativeOrder(initOrderListbox)).grid(column=self.RIGHT_PANE_COLUMN+10, row=2, sticky=N)
+		ttk.Button(newCombatView, text='Down', bootstyle=ttk.LIGHT, command=lambda:self.moveDownInitiativeOrder(initOrderListbox)).grid(column=self.RIGHT_PANE_COLUMN+10, row=3, sticky=N)
+
 		'''
 			MIDDLE: ROUND LABEL
 		'''
@@ -395,7 +431,6 @@ class CombatManager:
 		combatOverBtn = ttk.Button(newCombatView, text='End Combat', bootstyle=ttk.DANGER, command=lambda:self.combatOver(combat))
 		combatOverBtn.grid(column=self.COMBAT_OVER_BTN_COLUMN, row=self.ITERATE_BTN_ROW, sticky=W, ipadx=2, padx=5)
 		self.allButtonsDict['combatOverBtn'] = combatOverBtn
-		ttk.Button(newCombatView, text='Main', bootstyle=ttk.LIGHT, command=lambda:self.goToMainMenu(root)).grid(column=self.RIGHT_PANE_COLUMN+10, row=0, sticky=N)
 
 	def existingCombatView(self, combat_selection_box, file_selection_dict, root, existing):
 		root.geometry('1000x500')
