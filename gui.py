@@ -5,15 +5,11 @@ import ttkbootstrap as ttk
 
 import csv
 
-from run_combat import display_combat_options, get_combat_based_on_selection, write_combat_to_file, get_npc_init, tiebreaker
-# required for loading existing files
+from functions import display_combat_options, get_combat_based_on_selection, write_combat_to_file, get_npc_init, tiebreaker
 from Combat import Combat
 from Character import Character
 
-# CONTINUING MOST RECNET COMBAT next round won't start
-
 class CombatManager:
-
 	def __init__(self, root):
 		self.turnIndex = 0
 		self.rowIndex = 0

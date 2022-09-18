@@ -402,6 +402,7 @@ def round_order(combatants, combat=None, f=False):
 def tiebreaker(combatants, gui=False):
 	'''A function to break ties between characters' initiative counts and, if necessary, their dexterity bonuses.
 	TODO: reduce duplicate code
+	TODO: roll off tie
 
 	Parameters
 	----------
